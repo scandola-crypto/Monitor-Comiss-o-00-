@@ -6,50 +6,116 @@
 <title>Dashboard de Vendas - Monitor Contábil</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-    body { font-family: Arial, sans-serif; background-color: #003366; color: #fff; margin: 20px; }
-    h1 { color: #ff6600; display: flex; align-items: center; gap: 10px; }
+    :root{--bg:#003366;--accent:#ff6600;--muted:#001f4d;}
+    body { font-family: Arial, sans-serif; background-color: var(--bg); color: #fff; margin: 16px; }
+    h1 { color: var(--accent); display: flex; align-items: center; gap: 10px; flex-wrap:wrap; }
     h1 img { height: 40px; }
-    .container { display: flex; flex-direction: column; gap: 20px; }
-    table { width: 100%; border-collapse: collapse; background: #003366; color: #fff; }
-    th, td { border: 1px solid #ff6600; padding: 8px; text-align: center; }
-    th { background-color: #ff6600; color: white; }
-    button { padding: 5px 10px; background-color: #ff6600; color: #003366; border: none; cursor: pointer; margin: 2px; }
-    button:hover { background-color: #fff; color: #003366; }
-    input, select { padding: 5px; margin: 5px; }
-    .form-container { background: #003366; padding: 10px; border: 1px solid #ff6600; }
-    .charts { display: flex; flex-wrap: wrap; gap: 20px; }
-    .chart-container { background: #003366; color: #fff; padding: 10px; border-radius: 5px; flex: 1; min-width: 300px; }
+    .container { display: flex; flex-direction: column; gap: 16px; max-width:1200px; margin:0 auto; }
+    .table-wrap{overflow-x:auto; border:1px solid rgba(255,102,0,0.15); border-radius:6px;}
+    table { width: 100%; border-collapse: collapse; background: transparent; color: #fff; }
+    th, td { border: 1px solid var(--accent); padding: 8px; text-align: center; }
+    th { background-color: var(--accent); color: white; }
+    button { padding: 6px 12px; background-color: var(--accent); color: var(--bg); border: none; cursor: pointer; margin: 4px; border-radius:4px; }
+    button:hover { background-color: #fff; color: var(--bg); }
+    input, select { padding: 6px; margin: 6px 4px; border-radius:4px; border:1px solid rgba(255,255,255,0.08); }
+    .form-container { background: transparent; padding: 10px; border: 1px solid var(--accent); border-radius:6px; }
+    .charts { display: flex; flex-direction: column; gap: 16px; align-items: center; }
+    .chart-container { background: transparent; color: #fff; padding: 10px; border-radius: 5px; max-width: 600px; width: 100%; }
+    .chart-container canvas{max-width:100% !important; max-height:400px !important;}
+    .resumo-card{display:inline-block; margin:8px 12px 0 0; padding:8px 12px; background:rgba(255,255,255,0.05); border-left:3px solid var(--accent); border-radius:4px;}
+    .resumo-card strong{color:var(--accent); font-size:18px;}
+    .resumo-card small{color:#ccc; font-size:11px;}
+
+    /* Mobile adjustments */
+    @media (max-width: 700px){
+        body{margin:10px}
+        .form-container input, .form-container select{width:100%; box-sizing:border-box}
+        h1 img{height:32px}
+        th, td{font-size:13px}
+        .resumo-card{display:block; margin:6px 0;}
+    }
 </style>
 </head>
 <body>
-<h1><img src="https://i.imgur.com/2X1vBxp.png" alt="Logo Monitor Contábil">Dashboard de Vendas - Monitor Contábil</h1>
+<h1><img src="https://media.licdn.com/dms/image/v2/C4D0BAQFl8jPoEN5H4A/company-logo_200_200/company-logo_200_200/0/1677181747889?e=2147483647&v=beta&t=7iLTTmqbkRp7wd4fVpxOn9PHdQxJ7Js2-sH6Zo0p2PA" alt="Logo Monitor Contábil">Dashboard de Vendas - Monitor Contábil</h1>
 <div class="container">
 
     <div class="form-container">
         <h2>Adicionar / Editar Cliente</h2>
         <input type="hidden" id="clienteIndex">
-        <input type="text" id="clienteNome" placeholder="Nome do Cliente">
-        <input type="text" id="clienteCNPJ" placeholder="CNPJ">
-        <input type="number" id="clienteMRR" placeholder="MRR">
-        <input type="number" id="clienteSetup" placeholder="Implantação">
-        <input type="text" id="clienteInfoPagamento" placeholder="Informação do Pagamento">
-        <select id="clientePagamento">
+        <input type="text" id="clienteNome" placeholder="Nome do Cliente" required>
+        <input type="text" id="clienteCNPJ" placeholder="CNPJ" required>
+        <input type="number" id="clienteMRR" placeholder="MRR" required>
+        <input type="number" id="clienteSetup" placeholder="Implantação" required>
+        
+        <select id="clienteMes" required style="background:#fff; color:#333;">
+            <option value="">📅 Selecione o Mês *</option>
+            <option value="1">Janeiro</option>
+            <option value="2">Fevereiro</option>
+            <option value="3">Março</option>
+            <option value="4">Abril</option>
+            <option value="5">Maio</option>
+            <option value="6">Junho</option>
+            <option value="7">Julho</option>
+            <option value="8">Agosto</option>
+            <option value="9">Setembro</option>
+            <option value="10">Outubro</option>
+            <option value="11">Novembro</option>
+            <option value="12">Dezembro</option>
+        </select>
+        
+        <select id="clientePagamento" required>
+            <option value="">Forma de Pagamento *</option>
             <option value="PIX">PIX</option>
             <option value="CARTÃO">CARTÃO</option>
             <option value="BOLETO">BOLETO</option>
         </select>
-        <button onclick="salvarCliente()">Salvar</button>
+        
+        <input type="text" id="clienteInfoPagamento" placeholder="Observações adicionais (opcional)">
+        
+        <button onclick="salvarCliente()">💾 Salvar Cliente</button>
     </div>
 
+    <div class="form-container" style="margin-top:10px;">
+        <h3 style="color:#ff6600; margin:0 0 10px 0;">� Busca e Filtros</h3>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+            <input type="text" id="campoBusca" placeholder="🔎 Buscar por nome, CNPJ, pagamento..." 
+                   oninput="aplicarFiltros()" style="flex:1; min-width:250px;">
+            <select id="filtroMes" onchange="aplicarFiltros()" style="width:180px;">
+                <option value="todos">📅 Todos os Meses</option>
+                <option value="1">Janeiro</option>
+                <option value="2">Fevereiro</option>
+                <option value="3">Março</option>
+                <option value="4">Abril</option>
+                <option value="5">Maio</option>
+                <option value="6">Junho</option>
+                <option value="7">Julho</option>
+                <option value="8">Agosto</option>
+                <option value="9">Setembro</option>
+                <option value="10">Outubro</option>
+                <option value="11">Novembro</option>
+                <option value="12">Dezembro</option>
+            </select>
+            <button onclick="limparFiltros()" style="background:#666;">Limpar Filtros</button>
+        </div>
+        <div id="resultadoBusca" style="margin-top:8px; font-size:13px; color:#ffce56;"></div>
+        <div id="resumoMes" style="margin-top:12px; padding:10px; background:rgba(255,102,0,0.1); border-radius:4px; display:none;">
+            <strong style="color:#ff6600;">Resumo do Mês:</strong><br>
+            <span id="resumoTexto" style="font-size:14px;"></span>
+        </div>
+    </div>
+
+    <div class="table-wrap">
     <table id="tabelaVendas">
         <thead>
             <tr>
                 <th>Cliente</th>
                 <th>CNPJ</th>
+                <th>Mês</th>
                 <th>MRR</th>
                 <th>Implantação</th>
                 <th>Pagamento</th>
-                <th>Info Pagamento</th>
+                <th>Observações</th>
                 <th>Comissão %</th>
                 <th>Valor Comissão</th>
                 <th>Ações</th>
@@ -57,28 +123,34 @@
         </thead>
         <tbody></tbody>
     </table>
+    </div>
 
     <div class="charts">
         <div class="chart-container">
-            <canvas id="graficoValores"></canvas>
+            <h3 style="color:#ff6600; margin:0 0 10px 0;" id="tituloGrafico">📈 Visão Anual - Todos os Meses</h3>
+            <canvas id="graficoValores" aria-label="Gráfico de pizza por mês" role="img"></canvas>
         </div>
     </div>
 
     <div style="margin-top: 10px;">
         <button onclick="baixarCSV()">Baixar CSV</button>
+        <button id="limparBtn" onclick="limparDados()">Limpar dados</button>
     </div>
 </div>
 
 <script>
-let clientes = [
-    {Nome: 'ALAN FIALHO GANDRA FILHO', CNPJ: '639.628.883-49', MRR: 200, Setup: 1300, Pagamento: 'PIX', InfoPagamento: 'mes 10 1-out.'},
-    {Nome: 'CONTABILIDADE CUPT', CNPJ: '28.686.485/0001-38', MRR: 674, Setup: 1000, Pagamento: 'CARTÃO', InfoPagamento: 'mes 10 2-out.'}
-];
+// Inicia vazio - dados serão carregados do localStorage ou inseridos manualmente
+let clientes = [];
 
 // Carregar dados salvos do localStorage
 const clientesSalvos = localStorage.getItem('clientes');
 if(clientesSalvos) {
-    clientes = JSON.parse(clientesSalvos);
+    try {
+        clientes = JSON.parse(clientesSalvos);
+    } catch(e) {
+        console.error('Erro ao carregar dados salvos:', e);
+        clientes = [];
+    }
 }
 
 function calcularComissao(valorTotal) {
@@ -88,61 +160,112 @@ function calcularComissao(valorTotal) {
     else return 40;
 }
 
+let mesFiltroAtual = 'todos';
+let buscaAtual = '';
+
 function atualizarTabela() {
     localStorage.setItem('clientes', JSON.stringify(clientes)); // salva os dados
 
     const tbody = document.querySelector('#tabelaVendas tbody');
     tbody.innerHTML = '';
-    clientes.forEach((c, index) => {
+    
+    // Aplicar filtros combinados: busca + mês
+    let clientesFiltrados = clientes;
+
+    // Filtro de busca
+    if(buscaAtual.trim() !== '') {
+        const termoBusca = buscaAtual.toLowerCase();
+        clientesFiltrados = clientesFiltrados.filter(c => {
+            return (c.Nome || '').toLowerCase().includes(termoBusca) ||
+                   (c.CNPJ || '').toLowerCase().includes(termoBusca) ||
+                   (c.Pagamento || '').toLowerCase().includes(termoBusca) ||
+                   (c.InfoPagamento || '').toLowerCase().includes(termoBusca) ||
+                   (c.MRR || '').toString().includes(termoBusca) ||
+                   (c.Setup || '').toString().includes(termoBusca);
+        });
+    }
+
+    // Filtro de mês
+    if(mesFiltroAtual !== 'todos') {
+        clientesFiltrados = clientesFiltrados.filter(c => {
+            return c.Mes && parseInt(c.Mes) === parseInt(mesFiltroAtual);
+        });
+    }
+
+    // Atualizar contador de resultados
+    const resultadoDiv = document.getElementById('resultadoBusca');
+    if(buscaAtual.trim() !== '' || mesFiltroAtual !== 'todos') {
+        resultadoDiv.textContent = `📋 ${clientesFiltrados.length} registro(s) encontrado(s)`;
+    } else {
+        resultadoDiv.textContent = '';
+    }
+
+    const mesesNomes = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+    clientesFiltrados.forEach((c, index) => {
+        // Encontrar o índice real no array original
+        const indiceReal = clientes.indexOf(c);
         const valorTotal = parseFloat(c.MRR) + parseFloat(c.Setup);
         const comissaoPct = calcularComissao(valorTotal);
         const valorComissao = (valorTotal * comissaoPct / 100).toFixed(2);
+        const mesNome = c.Mes ? mesesNomes[parseInt(c.Mes)] : '-';
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${c.Nome}</td>
             <td>${c.CNPJ}</td>
+            <td><strong style="color:#ffce56;">${mesNome}</strong></td>
             <td>${c.MRR}</td>
             <td>${c.Setup}</td>
             <td>${c.Pagamento}</td>
-            <td>${c.InfoPagamento}</td>
+            <td>${c.InfoPagamento || '-'}</td>
             <td>${comissaoPct}%</td>
             <td>R$ ${valorComissao}</td>
             <td>
-                <button onclick="editarCliente(${index})">Editar</button>
-                <button onclick="excluirCliente(${index})">Excluir</button>
+                <button onclick="editarCliente(${indiceReal})">Editar</button>
+                <button onclick="excluirCliente(${indiceReal})">Excluir</button>
             </td>
         `;
         tbody.appendChild(tr);
     });
     atualizarGraficos();
+    atualizarResumoMes();
 }
 
 function salvarCliente() {
     const index = document.getElementById('clienteIndex').value;
-    const Nome = document.getElementById('clienteNome').value;
-    const CNPJ = document.getElementById('clienteCNPJ').value;
+    const Nome = document.getElementById('clienteNome').value.trim();
+    const CNPJ = document.getElementById('clienteCNPJ').value.trim();
     const MRR = document.getElementById('clienteMRR').value;
     const Setup = document.getElementById('clienteSetup').value;
+    const Mes = document.getElementById('clienteMes').value;
     const Pagamento = document.getElementById('clientePagamento').value;
-    const InfoPagamento = document.getElementById('clienteInfoPagamento').value;
+    const InfoPagamento = document.getElementById('clienteInfoPagamento').value.trim();
 
-    if(Nome && CNPJ && MRR && Setup && InfoPagamento) {
-        if(index === '') {
-            clientes.push({Nome, CNPJ, MRR, Setup, Pagamento, InfoPagamento});
-        } else {
-            clientes[index] = {Nome, CNPJ, MRR, Setup, Pagamento, InfoPagamento};
-        }
-        document.getElementById('clienteIndex').value = '';
-        document.getElementById('clienteNome').value = '';
-        document.getElementById('clienteCNPJ').value = '';
-        document.getElementById('clienteMRR').value = '';
-        document.getElementById('clienteSetup').value = '';
-        document.getElementById('clienteInfoPagamento').value = '';
-        atualizarTabela();
-    } else {
-        alert('Preencha todos os campos!');
+    if(!Nome || !CNPJ || !MRR || !Setup || !Mes || !Pagamento) {
+        alert('⚠️ Preencha todos os campos obrigatórios (*)!');
+        return;
     }
+
+    const clienteData = {Nome, CNPJ, MRR, Setup, Mes, Pagamento, InfoPagamento};
+
+    if(index === '') {
+        clientes.push(clienteData);
+    } else {
+        clientes[index] = clienteData;
+    }
+    
+    // Limpar formulário
+    document.getElementById('clienteIndex').value = '';
+    document.getElementById('clienteNome').value = '';
+    document.getElementById('clienteCNPJ').value = '';
+    document.getElementById('clienteMRR').value = '';
+    document.getElementById('clienteSetup').value = '';
+    document.getElementById('clienteMes').value = '';
+    document.getElementById('clientePagamento').value = '';
+    document.getElementById('clienteInfoPagamento').value = '';
+    
+    atualizarTabela();
 }
 
 function editarCliente(index) {
@@ -152,8 +275,12 @@ function editarCliente(index) {
     document.getElementById('clienteCNPJ').value = c.CNPJ;
     document.getElementById('clienteMRR').value = c.MRR;
     document.getElementById('clienteSetup').value = c.Setup;
+    document.getElementById('clienteMes').value = c.Mes || '';
     document.getElementById('clientePagamento').value = c.Pagamento;
-    document.getElementById('clienteInfoPagamento').value = c.InfoPagamento;
+    document.getElementById('clienteInfoPagamento').value = c.InfoPagamento || '';
+    
+    // Scroll para o topo do formulário
+    window.scrollTo({top: 0, behavior: 'smooth'});
 }
 
 function excluirCliente(index) {
@@ -163,36 +290,168 @@ function excluirCliente(index) {
 
 let graficoValores;
 function atualizarGraficos() {
-    const totalMRR = clientes.reduce((acc, c) => acc + parseFloat(c.MRR), 0);
-    const totalSetup = clientes.reduce((acc, c) => acc + parseFloat(c.Setup), 0);
-    const totalComissao = clientes.reduce((acc, c) => {
-        const valorTotal = parseFloat(c.MRR) + parseFloat(c.Setup);
+    const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const mesesCompletos = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    
+    const ctxValores = document.getElementById('graficoValores').getContext('2d');
+    if(graficoValores) graficoValores.destroy();
+
+    // Se está filtrando por mês específico, mostrar gráfico de barras detalhado
+    if(mesFiltroAtual !== 'todos') {
+        const mesNum = parseInt(mesFiltroAtual);
+        const clientesMes = clientes.filter(c => {
+            return c.Mes && parseInt(c.Mes) === mesNum;
+        });
+
+        const totalMRR = clientesMes.reduce((acc, c) => acc + (parseFloat(c.MRR) || 0), 0);
+        const totalSetup = clientesMes.reduce((acc, c) => acc + (parseFloat(c.Setup) || 0), 0);
+        const totalComissao = clientesMes.reduce((acc, c) => {
+            const valorTotal = (parseFloat(c.MRR) || 0) + (parseFloat(c.Setup) || 0);
+            return acc + (valorTotal * calcularComissao(valorTotal) / 100);
+        }, 0);
+
+        document.getElementById('tituloGrafico').textContent = `📊 Resumo de ${mesesCompletos[mesNum-1]}`;
+
+        graficoValores = new Chart(ctxValores, {
+            type: 'bar',
+            data: {
+                labels: ['MRR', 'Implantação', 'Comissão'],
+                datasets: [{
+                    label: mesesCompletos[mesNum-1],
+                    data: [totalMRR.toFixed(2), totalSetup.toFixed(2), totalComissao.toFixed(2)],
+                    backgroundColor: ['#ff6384','#36a2eb','#ffce56'],
+                    borderColor: '#0b2340',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { labels: { color: '#fff' } },
+                    tooltip: { callbacks: { label: function(ctx){
+                        return `R$ ${Number(ctx.parsed.y).toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
+                    }}}
+                },
+                scales: {
+                    x: { ticks: { color: '#fff' }, grid: { color: '#001f4d' } },
+                    y: { ticks: { color: '#fff' }, grid: { color: '#001f4d' }, beginAtZero: true }
+                }
+            }
+        });
+    } else {
+        // Visão anual - gráfico de pizza com todos os meses
+        const monthlyTotals = new Array(12).fill(0);
+
+        clientes.forEach(c => {
+            if(c.Mes) {
+                const valor = (parseFloat(c.MRR) || 0) + (parseFloat(c.Setup) || 0);
+                const monthIndex = Math.max(1, Math.min(12, parseInt(c.Mes))) - 1;
+                monthlyTotals[monthIndex] += valor;
+            }
+        });
+
+        document.getElementById('tituloGrafico').textContent = '📈 Visão Anual - Todos os Meses';
+
+        const colors = ['#ff6384','#36a2eb','#ffce56','#66bb6a','#ab47bc','#ff7043','#29b6f6','#ffee58','#8d6e63','#9ccc65','#26a69a','#5c6bc0'];
+
+        graficoValores = new Chart(ctxValores, {
+            type: 'pie',
+            data: {
+                labels: meses,
+                datasets: [{
+                    data: monthlyTotals.map(v => +v.toFixed(2)),
+                    backgroundColor: colors,
+                    borderColor: '#0b2340',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { labels: { color: '#fff' }, position: 'bottom' },
+                    tooltip: { callbacks: { label: function(ctx){
+                        const val = ctx.parsed || 0; return `${ctx.label}: R$ ${Number(val).toLocaleString('pt-BR')}`;
+                    }}}
+                }
+            }
+        });
+    }
+}
+
+function limparDados(){
+    if(!confirm('Tem certeza que deseja limpar todos os dados? Essa ação não pode ser desfeita.')) return;
+    clientes = [];
+    localStorage.removeItem('clientes');
+    limparFiltros();
+}
+
+function aplicarFiltros() {
+    mesFiltroAtual = document.getElementById('filtroMes').value;
+    buscaAtual = document.getElementById('campoBusca').value;
+    atualizarTabela();
+}
+
+function limparFiltros() {
+    mesFiltroAtual = 'todos';
+    buscaAtual = '';
+    document.getElementById('filtroMes').value = 'todos';
+    document.getElementById('campoBusca').value = '';
+    atualizarTabela();
+}
+
+function atualizarResumoMes() {
+    const resumoDiv = document.getElementById('resumoMes');
+    const resumoTexto = document.getElementById('resumoTexto');
+    
+    if(mesFiltroAtual === 'todos') {
+        resumoDiv.style.display = 'none';
+        return;
+    }
+
+    const mesesCompletos = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const mesNum = parseInt(mesFiltroAtual);
+    
+    const clientesMes = clientes.filter(c => {
+        return c.Mes && parseInt(c.Mes) === mesNum;
+    });
+
+    if(clientesMes.length === 0) {
+        resumoDiv.style.display = 'block';
+        resumoTexto.innerHTML = `<span style="color:#ffce56;">Nenhum registro encontrado para ${mesesCompletos[mesNum-1]}</span>`;
+        return;
+    }
+
+    const totalMRR = clientesMes.reduce((acc, c) => acc + (parseFloat(c.MRR) || 0), 0);
+    const totalSetup = clientesMes.reduce((acc, c) => acc + (parseFloat(c.Setup) || 0), 0);
+    const totalGeral = totalMRR + totalSetup;
+    const totalComissao = clientesMes.reduce((acc, c) => {
+        const valorTotal = (parseFloat(c.MRR) || 0) + (parseFloat(c.Setup) || 0);
         return acc + (valorTotal * calcularComissao(valorTotal) / 100);
     }, 0);
 
-    const ctxValores = document.getElementById('graficoValores').getContext('2d');
-
-    if(graficoValores) graficoValores.destroy();
-
-    graficoValores = new Chart(ctxValores, {
-        type: 'bar',
-        data: {
-            labels: ['Totais'],
-            datasets: [
-                { label: 'MRR Total', data: [totalMRR], backgroundColor: '#ff6600' },
-                { label: 'Implantação Total', data: [totalSetup], backgroundColor: '#00ccff' },
-                { label: 'Comissão Total', data: [totalComissao.toFixed(2)], backgroundColor: '#ffcc00' }
-            ]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { labels: { color: '#fff' } } },
-            scales: {
-                x: { ticks: { color: '#fff' }, grid: { color: '#001f4d' } },
-                y: { ticks: { color: '#fff' }, grid: { color: '#001f4d' } }
-            }
-        }
-    });
+    resumoDiv.style.display = 'block';
+    resumoTexto.innerHTML = `
+        <div class="resumo-card">
+            <small>Clientes</small><br>
+            <strong>${clientesMes.length}</strong>
+        </div>
+        <div class="resumo-card">
+            <small>MRR Total</small><br>
+            <strong>R$ ${totalMRR.toLocaleString('pt-BR', {minimumFractionDigits:2})}</strong>
+        </div>
+        <div class="resumo-card">
+            <small>Implantação Total</small><br>
+            <strong>R$ ${totalSetup.toLocaleString('pt-BR', {minimumFractionDigits:2})}</strong>
+        </div>
+        <div class="resumo-card">
+            <small>Valor Total</small><br>
+            <strong>R$ ${totalGeral.toLocaleString('pt-BR', {minimumFractionDigits:2})}</strong>
+        </div>
+        <div class="resumo-card">
+            <small>Comissão Total</small><br>
+            <strong style="color:#00ff88;">R$ ${totalComissao.toLocaleString('pt-BR', {minimumFractionDigits:2})}</strong>
+        </div>
+    `;
 }
 
 function baixarCSV() {
@@ -201,12 +460,14 @@ function baixarCSV() {
         return;
     }
 
-    const cabecalho = ['Nome','CNPJ','MRR','Implantação','Pagamento','Info Pagamento','Comissão %','Valor Comissão'];
+    const mesesCompletos = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const cabecalho = ['Nome','CNPJ','Mês','MRR','Implantação','Pagamento','Observações','Comissão %','Valor Comissão'];
     const linhas = clientes.map(c => {
         const valorTotal = parseFloat(c.MRR) + parseFloat(c.Setup);
         const comissaoPct = calcularComissao(valorTotal);
         const valorComissao = (valorTotal * comissaoPct / 100).toFixed(2);
-        return [c.Nome, c.CNPJ, c.MRR, c.Setup, c.Pagamento, c.InfoPagamento, comissaoPct + '%', valorComissao].join(';');
+        const mesNome = c.Mes ? mesesCompletos[parseInt(c.Mes)] : '-';
+        return [c.Nome, c.CNPJ, mesNome, c.MRR, c.Setup, c.Pagamento, c.InfoPagamento || '-', comissaoPct + '%', valorComissao].join(';');
     });
 
     const csvContent = [cabecalho.join(';'), ...linhas].join('\n');
