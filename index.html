@@ -139,19 +139,27 @@
 </div>
 
 <script>
-// Inicia vazio - dados serão carregados do localStorage ou inseridos manualmente
+// URL do Google Apps Script (API do Google Sheets)
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzhOzWuN6kIChZNkqGxwYuGTtMhWzz6jdhxkx2DiV7s_ycXSScElvAeDWOfBefb2p2F/exec';
+
+// Inicia vazio - dados serão carregados do Google Sheets
 let clientes = [];
 
-// Carregar dados salvos do localStorage
-const clientesSalvos = localStorage.getItem('clientes');
-if(clientesSalvos) {
+// Função para carregar dados do Google Sheets
+async function carregarDados() {
     try {
-        clientes = JSON.parse(clientesSalvos);
+        const response = await fetch(GOOGLE_SCRIPT_URL);
+        const data = await response.json();
+        clientes = data;
+        atualizarTabela();
     } catch(e) {
-        console.error('Erro ao carregar dados salvos:', e);
-        clientes = [];
+        console.error('Erro ao carregar dados do Google Sheets:', e);
+        alert('⚠️ Erro ao conectar com o Google Sheets. Verifique a conexão.');
     }
 }
+
+// Carregar dados ao iniciar
+carregarDados();
 
 function calcularComissao(valorTotal) {
     if(valorTotal <= 20000) return 20;
@@ -164,7 +172,7 @@ let mesFiltroAtual = 'todos';
 let buscaAtual = '';
 
 function atualizarTabela() {
-    localStorage.setItem('clientes', JSON.stringify(clientes)); // salva os dados
+    // Não precisa mais salvar no localStorage - dados estão no Google Sheets
 
     const tbody = document.querySelector('#tabelaVendas tbody');
     tbody.innerHTML = '';
@@ -232,7 +240,7 @@ function atualizarTabela() {
     atualizarResumoMes();
 }
 
-function salvarCliente() {
+async function salvarCliente() {
     const index = document.getElementById('clienteIndex').value;
     const Nome = document.getElementById('clienteNome').value.trim();
     const CNPJ = document.getElementById('clienteCNPJ').value.trim();
@@ -249,23 +257,48 @@ function salvarCliente() {
 
     const clienteData = {Nome, CNPJ, MRR, Setup, Mes, Pagamento, InfoPagamento};
 
-    if(index === '') {
-        clientes.push(clienteData);
-    } else {
-        clientes[index] = clienteData;
+    try {
+        if(index === '') {
+            // Adicionar novo cliente
+            await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({action: 'add', ...clienteData})
+            });
+        } else {
+            // Atualizar cliente existente
+            const clienteAntigo = clientes[index];
+            await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    action: 'update',
+                    oldNome: clienteAntigo.Nome,
+                    oldCNPJ: clienteAntigo.CNPJ,
+                    ...clienteData
+                })
+            });
+        }
+        
+        // Limpar formulário
+        document.getElementById('clienteIndex').value = '';
+        document.getElementById('clienteNome').value = '';
+        document.getElementById('clienteCNPJ').value = '';
+        document.getElementById('clienteMRR').value = '';
+        document.getElementById('clienteSetup').value = '';
+        document.getElementById('clienteMes').value = '';
+        document.getElementById('clientePagamento').value = '';
+        document.getElementById('clienteInfoPagamento').value = '';
+        
+        // Recarregar dados
+        setTimeout(() => carregarDados(), 1000);
+        alert('✅ Cliente salvo com sucesso!');
+    } catch(e) {
+        console.error('Erro ao salvar:', e);
+        alert('⚠️ Erro ao salvar no Google Sheets.');
     }
-    
-    // Limpar formulário
-    document.getElementById('clienteIndex').value = '';
-    document.getElementById('clienteNome').value = '';
-    document.getElementById('clienteCNPJ').value = '';
-    document.getElementById('clienteMRR').value = '';
-    document.getElementById('clienteSetup').value = '';
-    document.getElementById('clienteMes').value = '';
-    document.getElementById('clientePagamento').value = '';
-    document.getElementById('clienteInfoPagamento').value = '';
-    
-    atualizarTabela();
 }
 
 function editarCliente(index) {
@@ -283,9 +316,29 @@ function editarCliente(index) {
     window.scrollTo({top: 0, behavior: 'smooth'});
 }
 
-function excluirCliente(index) {
-    clientes.splice(index, 1);
-    atualizarTabela();
+async function excluirCliente(index) {
+    if(!confirm('⚠️ Tem certeza que deseja excluir este cliente?')) return;
+    
+    const cliente = clientes[index];
+    
+    try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                action: 'delete',
+                Nome: cliente.Nome,
+                CNPJ: cliente.CNPJ
+            })
+        });
+        
+        setTimeout(() => carregarDados(), 1000);
+        alert('✅ Cliente excluído com sucesso!');
+    } catch(e) {
+        console.error('Erro ao excluir:', e);
+        alert('⚠️ Erro ao excluir do Google Sheets.');
+    }
 }
 
 let graficoValores;
@@ -378,11 +431,24 @@ function atualizarGraficos() {
     }
 }
 
-function limparDados(){
-    if(!confirm('Tem certeza que deseja limpar todos os dados? Essa ação não pode ser desfeita.')) return;
-    clientes = [];
-    localStorage.removeItem('clientes');
-    limparFiltros();
+async function limparDados(){
+    if(!confirm('⚠️ Tem certeza que deseja limpar TODOS os dados do Google Sheets? Essa ação não pode ser desfeita!')) return;
+    
+    try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({action: 'clear'})
+        });
+        
+        setTimeout(() => carregarDados(), 1000);
+        limparFiltros();
+        alert('✅ Dados limpos com sucesso!');
+    } catch(e) {
+        console.error('Erro ao limpar dados:', e);
+        alert('⚠️ Erro ao limpar dados do Google Sheets.');
+    }
 }
 
 function aplicarFiltros() {
@@ -483,7 +549,7 @@ function baixarCSV() {
     document.body.removeChild(link);
 }
 
-atualizarTabela();
+// Não chama mais atualizarTabela() aqui - será chamado pelo carregarDados()
 </script>
 </body>
 </html>
