@@ -140,7 +140,7 @@
 
 <script>
 // URL do Google Apps Script (API do Google Sheets)
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzhOzWuN6kIChZNkqGxwYuGTtMhWzz6jdhxkx2DiV7s_ycXSScElvAeDWOfBefb2p2F/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzW4BW79bXogd6kL4C54syCeMTvjQPImJaWZlxOe-Cu3JrAos4CN5Pw5KJVPYn95B4W3g/exec';
 
 // Inicia vazio - dados serão carregados do Google Sheets
 let clientes = [];
@@ -148,13 +148,33 @@ let clientes = [];
 // Função para carregar dados do Google Sheets
 async function carregarDados() {
     try {
+        console.log('🔄 Tentando conectar ao Google Sheets...');
+        console.log('URL:', GOOGLE_SCRIPT_URL);
+        
         const response = await fetch(GOOGLE_SCRIPT_URL);
+        console.log('📡 Resposta recebida:', response.status, response.statusText);
+        
         const data = await response.json();
-        clientes = data;
+        console.log('📊 Dados recebidos:', data);
+        
+        // Verificar se há erro na resposta
+        if (data.error) {
+            console.error('❌ Erro do servidor:', data.error);
+            alert('⚠️ Erro do Google Sheets: ' + data.error);
+            return;
+        }
+        
+        clientes = Array.isArray(data) ? data : [];
+        console.log('✅ Total de clientes carregados:', clientes.length);
         atualizarTabela();
     } catch(e) {
-        console.error('Erro ao carregar dados do Google Sheets:', e);
-        alert('⚠️ Erro ao conectar com o Google Sheets. Verifique a conexão.');
+        console.error('❌ Erro ao carregar dados do Google Sheets:', e);
+        console.error('Detalhes do erro:', e.message);
+        alert('⚠️ Erro ao conectar com o Google Sheets.\n\nPossíveis causas:\n1. A implantação do Apps Script não foi autorizada\n2. A URL está incorreta\n3. A planilha não tem dados ainda\n\nVerifique o console (F12) para mais detalhes.');
+        
+        // Tentar carregar dados vazios para não quebrar o app
+        clientes = [];
+        atualizarTabela();
     }
 }
 
