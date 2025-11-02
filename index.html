@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard de Vendas - Monitor Contábil</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Font Awesome para ícones -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
     :root {
         --bg: #0a1628;
@@ -329,6 +331,134 @@
         to { transform: translateX(0); opacity: 1; }
     }
     
+    /* Paginação */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .pagination button {
+        padding: 8px 12px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        color: var(--text-primary);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 14px;
+    }
+    
+    .pagination button:hover:not(:disabled) {
+        background: var(--accent);
+        border-color: var(--accent);
+    }
+    
+    .pagination button:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+    
+    .pagination button.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        font-weight: 600;
+    }
+    
+    .pagination-info {
+        color: var(--text-secondary);
+        font-size: 14px;
+        margin: 0 10px;
+    }
+    
+    /* Modal */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 10000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        animation: fadeIn 0.3s;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .modal.show { display: flex; align-items: center; justify-content: center; }
+    
+    .modal-content {
+        background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        border-radius: 16px;
+        padding: 0;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        animation: slideDown 0.3s;
+        border: 1px solid var(--border);
+    }
+    
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-50px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .modal-header {
+        padding: 24px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: var(--bg-secondary);
+        border-radius: 16px 16px 0 0;
+    }
+    
+    .modal-header i {
+        font-size: 24px;
+        color: var(--accent);
+    }
+    
+    .modal-header h3 {
+        margin: 0;
+        color: var(--text-primary);
+        font-size: 20px;
+    }
+    
+    .modal-body {
+        padding: 24px;
+        color: var(--text-secondary);
+        font-size: 16px;
+        line-height: 1.6;
+    }
+    
+    .modal-footer {
+        padding: 20px 24px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        background: var(--bg-secondary);
+        border-radius: 0 0 16px 16px;
+    }
+    
+    .modal-footer .btn {
+        min-width: 100px;
+    }
+    
     @media (max-width: 768px) {
         .header { flex-direction: column; text-align: center; }
         .header h1 { font-size: 20px; }
@@ -338,6 +468,9 @@
         th, td { padding: 8px; }
         .btn-group { flex-direction: column; }
         .btn { width: 100%; justify-content: center; }
+        .modal-content { width: 95%; }
+        .modal-footer { flex-direction: column; }
+        .modal-footer .btn { width: 100%; }
     }
 </style>
 </head>
@@ -352,7 +485,7 @@
 
 <div class="header">
     <img src="https://media.licdn.com/dms/image/v2/C4D0BAQFl8jPoEN5H4A/company-logo_200_200/company-logo_200_200/0/1677181747889?e=2147483647&v=beta&t=7iLTTmqbkRp7wd4fVpxOn9PHdQxJ7Js2-sH6Zo0p2PA" alt="Logo">
-    <h1>📊 Dashboard de Vendas - Monitor Contábil</h1>
+    <h1><i class="fas fa-chart-line"></i> Dashboard de Vendas - Monitor Contábil</h1>
 </div>
 
 <div class="container">
@@ -361,7 +494,7 @@
 
     <!-- Formulário -->
     <div class="card">
-        <h2>✏️ <span id="formTitle">Adicionar Cliente</span></h2>
+        <h2><i class="fas fa-edit"></i> <span id="formTitle">Adicionar Cliente</span></h2>
         <form id="clienteForm" onsubmit="salvarCliente(event)">
             <input type="hidden" id="clienteIndex">
             
@@ -422,19 +555,19 @@
             </div>
             
             <div class="btn-group" style="margin-top: 20px;">
-                <button type="submit" class="btn">💾 Salvar Cliente</button>
-                <button type="button" class="btn btn-secondary" onclick="cancelarEdicao()">✖️ Cancelar</button>
+                <button type="submit" class="btn"><i class="fas fa-save"></i> Salvar Cliente</button>
+                <button type="button" class="btn btn-secondary" onclick="cancelarEdicao()"><i class="fas fa-times"></i> Cancelar</button>
             </div>
         </form>
     </div>
 
     <!-- Filtros -->
     <div class="card">
-        <h2>🔍 Buscar e Filtrar</h2>
+        <h2><i class="fas fa-filter"></i> Buscar e Filtrar</h2>
         <div class="search-container">
-            <input type="text" id="campoBusca" placeholder="🔎 Buscar por nome, CNPJ, pagamento..." oninput="aplicarFiltros()">
+            <input type="text" id="campoBusca" placeholder="Buscar por nome, CNPJ, pagamento..." oninput="aplicarFiltros()">
             <select id="filtroMes" onchange="aplicarFiltros()">
-                <option value="todos">📅 Todos os Meses</option>
+                <option value="todos">Todos os Meses</option>
                 <option value="1">Janeiro</option>
                 <option value="2">Fevereiro</option>
                 <option value="3">Março</option>
@@ -448,14 +581,14 @@
                 <option value="11">Novembro</option>
                 <option value="12">Dezembro</option>
             </select>
-            <button class="btn btn-secondary" onclick="limparFiltros()">🗑️ Limpar</button>
+            <button class="btn btn-secondary" onclick="limparFiltros()"><i class="fas fa-eraser"></i> Limpar</button>
         </div>
         <div id="resultadoBusca"></div>
     </div>
 
     <!-- Tabela -->
     <div class="card">
-        <h2>👥 Clientes Cadastrados</h2>
+        <h2><i class="fas fa-users"></i> Clientes Cadastrados</h2>
         <div class="table-container">
             <table>
                 <thead>
@@ -476,11 +609,14 @@
                 <tbody id="tabelaBody"></tbody>
             </table>
         </div>
+        
+        <!-- Paginação -->
+        <div class="pagination" id="pagination"></div>
     </div>
 
     <!-- Gráficos -->
     <div class="card">
-        <h2 id="tituloGrafico">📈 Visão Anual</h2>
+        <h2 id="tituloGrafico"><i class="fas fa-chart-pie"></i> Visão Anual</h2>
         <div class="chart-wrapper">
             <canvas id="graficoValores"></canvas>
         </div>
@@ -488,11 +624,11 @@
 
     <!-- Ações -->
     <div class="card">
-        <h2>⚙️ Ações</h2>
+        <h2><i class="fas fa-tools"></i> Ações</h2>
         <div class="btn-group">
-            <button class="btn" onclick="baixarCSV()">📥 Baixar CSV</button>
-            <button class="btn btn-secondary" onclick="recarregarDados()">🔄 Recarregar</button>
-            <button class="btn btn-danger" onclick="limparDados()">🗑️ Limpar Tudo</button>
+            <button class="btn" onclick="baixarCSV()"><i class="fas fa-download"></i> Baixar CSV</button>
+            <button class="btn btn-secondary" onclick="recarregarDados()"><i class="fas fa-sync-alt"></i> Recarregar</button>
+            <button class="btn btn-danger" onclick="limparDados()"><i class="fas fa-trash"></i> Limpar Tudo</button>
         </div>
     </div>
 </div>
@@ -505,6 +641,10 @@ let clientesFiltrados = [];
 let mesFiltroAtual = 'todos';
 let buscaAtual = '';
 let graficoValores;
+
+// Paginação
+let paginaAtual = 1;
+const registrosPorPagina = 5;
 
 const mesesNomes = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 const mesesCompletos = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -525,7 +665,8 @@ function hideLoading() {
 
 function showToast(message, isError = false) {
     const toast = document.getElementById('toast');
-    toast.textContent = message;
+    const icon = isError ? '<i class="fas fa-exclamation-circle"></i>' : '<i class="fas fa-check-circle"></i>';
+    toast.innerHTML = `${icon} ${message}`;
     toast.className = 'toast show' + (isError ? ' error' : '');
     setTimeout(() => toast.classList.remove('show'), 3000);
 }
@@ -582,23 +723,23 @@ function atualizarStats() {
     const statsGrid = document.getElementById('statsGrid');
     statsGrid.innerHTML = `
         <div class="stat-card">
-            <div class="label">Total Clientes</div>
+            <div class="label"><i class="fas fa-users"></i> Total Clientes</div>
             <div class="value">${totalClientes}</div>
         </div>
         <div class="stat-card">
-            <div class="label">MRR Total</div>
+            <div class="label"><i class="fas fa-calendar-alt"></i> MRR Total</div>
             <div class="value">R$ ${totalMRR.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
         </div>
         <div class="stat-card">
-            <div class="label">Setup Total</div>
+            <div class="label"><i class="fas fa-rocket"></i> Setup Total</div>
             <div class="value">R$ ${totalSetup.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
         </div>
         <div class="stat-card">
-            <div class="label">Total Geral</div>
+            <div class="label"><i class="fas fa-coins"></i> Total Geral</div>
             <div class="value">R$ ${totalGeral.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
         </div>
         <div class="stat-card">
-            <div class="label">Comissão Total</div>
+            <div class="label"><i class="fas fa-hand-holding-usd"></i> Comissão Total</div>
             <div class="value" style="color: var(--success)">R$ ${totalComissao.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
         </div>
     `;
@@ -624,12 +765,14 @@ function aplicarFiltros() {
     
     const resultadoDiv = document.getElementById('resultadoBusca');
     if (buscaAtual || mesFiltroAtual !== 'todos') {
-        resultadoDiv.innerHTML = `<div class="filter-info">📋 ${clientesFiltrados.length} registro(s) encontrado(s)</div>`;
+        resultadoDiv.innerHTML = `<div class="filter-info"><i class="fas fa-info-circle"></i> ${clientesFiltrados.length} registro(s) encontrado(s)</div>`;
     } else {
         resultadoDiv.innerHTML = '';
     }
     
+    paginaAtual = 1;
     atualizarTabela();
+    atualizarPaginacao();
     atualizarGraficos();
 }
 
@@ -637,6 +780,46 @@ function limparFiltros() {
     document.getElementById('filtroMes').value = 'todos';
     document.getElementById('campoBusca').value = '';
     aplicarFiltros();
+}
+
+// Paginação
+function atualizarPaginacao() {
+    const paginationDiv = document.getElementById('pagination');
+    const totalPaginas = Math.ceil(clientesFiltrados.length / registrosPorPagina);
+    
+    if (totalPaginas <= 1) {
+        paginationDiv.innerHTML = '';
+        return;
+    }
+    
+    let html = '<button class="page-btn" onclick="mudarPagina(paginaAtual - 1)" ' + 
+               (paginaAtual === 1 ? 'disabled' : '') + '><i class="fas fa-chevron-left"></i> Anterior</button>';
+    
+    for (let i = 1; i <= totalPaginas; i++) {
+        if (i === 1 || i === totalPaginas || (i >= paginaAtual - 1 && i <= paginaAtual + 1)) {
+            html += `<button class="page-btn ${i === paginaAtual ? 'active' : ''}" onclick="mudarPagina(${i})">${i}</button>`;
+        } else if (i === paginaAtual - 2 || i === paginaAtual + 2) {
+            html += '<span class="page-ellipsis">...</span>';
+        }
+    }
+    
+    html += '<button class="page-btn" onclick="mudarPagina(paginaAtual + 1)" ' + 
+            (paginaAtual === totalPaginas ? 'disabled' : '') + '>Próximo <i class="fas fa-chevron-right"></i></button>';
+    html += `<span class="page-info">Página ${paginaAtual} de ${totalPaginas}</span>`;
+    
+    paginationDiv.innerHTML = html;
+}
+
+function mudarPagina(novaPagina) {
+    const totalPaginas = Math.ceil(clientesFiltrados.length / registrosPorPagina);
+    if (novaPagina < 1 || novaPagina > totalPaginas) return;
+    
+    paginaAtual = novaPagina;
+    atualizarTabela();
+    atualizarPaginacao();
+    
+    // Scroll suave para o topo da tabela
+    document.querySelector('.table-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // Tabela
@@ -647,7 +830,7 @@ function atualizarTabela() {
         tbody.innerHTML = `
             <tr>
                 <td colspan="11" class="empty-state">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
+                    <div style="font-size: 48px; margin-bottom: 16px;"><i class="fas fa-inbox"></i></div>
                     <div>Nenhum cliente cadastrado</div>
                 </td>
             </tr>
@@ -655,7 +838,12 @@ function atualizarTabela() {
         return;
     }
     
-    tbody.innerHTML = clientesFiltrados.map((c, idx) => {
+    // Paginação
+    const inicio = (paginaAtual - 1) * registrosPorPagina;
+    const fim = inicio + registrosPorPagina;
+    const clientesPagina = clientesFiltrados.slice(inicio, fim);
+    
+    tbody.innerHTML = clientesPagina.map((c, idx) => {
         const indiceReal = clientes.indexOf(c);
         const mrr = parseFloat(c.MRR || 0);
         const setup = parseFloat(c.Setup || 0);
@@ -677,8 +865,8 @@ function atualizarTabela() {
                 <td>${comissaoPct}%</td>
                 <td style="color: var(--success); font-weight: 600;">R$ ${comissaoValor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
                 <td>
-                    <button class="btn btn-secondary" style="padding: 8px 12px; font-size: 12px;" onclick="editarCliente(${indiceReal})">✏️</button>
-                    <button class="btn btn-danger" style="padding: 8px 12px; font-size: 12px;" onclick="excluirCliente(${indiceReal})">🗑️</button>
+                    <button class="btn btn-secondary" style="padding: 8px 12px; font-size: 12px;" onclick="editarCliente(${indiceReal})"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-danger" style="padding: 8px 12px; font-size: 12px;" onclick="excluirCliente(${indiceReal})"><i class="fas fa-trash"></i></button>
                 </td>
             </tr>
         `;
@@ -857,55 +1045,63 @@ function cancelarEdicao() {
 }
 
 async function excluirCliente(index) {
-    if (!confirm('⚠️ Tem certeza que deseja excluir este cliente?')) return;
-    
     const cliente = clientes[index];
-    showLoading();
     
-    try {
-        await fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'delete',
-                Nome: cliente.Nome,
-                CNPJ: cliente.CNPJ
-            })
-        });
-        
-        showToast('✅ Cliente excluído com sucesso!');
-        setTimeout(() => carregarDados(), 1500);
-    } catch (error) {
-        console.error('Erro:', error);
-        showToast('❌ Erro ao excluir cliente', true);
-    } finally {
-        hideLoading();
-    }
+    showModal(
+        'Excluir Cliente',
+        `Tem certeza que deseja excluir o cliente "${cliente.Nome}"? Esta ação não pode ser desfeita.`,
+        async () => {
+            showLoading();
+            
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'delete',
+                        Nome: cliente.Nome,
+                        CNPJ: cliente.CNPJ
+                    })
+                });
+                
+                showToast('Cliente excluído com sucesso!');
+                setTimeout(() => carregarDados(), 1500);
+            } catch (error) {
+                console.error('Erro:', error);
+                showToast('Erro ao excluir cliente', true);
+            } finally {
+                hideLoading();
+            }
+        }
+    );
 }
 
 async function limparDados() {
-    if (!confirm('⚠️⚠️⚠️ ATENÇÃO! Isso irá APAGAR TODOS OS DADOS!\n\nTem certeza absoluta?')) return;
-    if (!confirm('Esta ação NÃO PODE ser desfeita!\n\nConfirma?')) return;
-    
-    showLoading();
-    try {
-        await fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'clear' })
-        });
-        
-        showToast('✅ Dados limpos com sucesso!');
-        limparFiltros();
-        setTimeout(() => carregarDados(), 1500);
-    } catch (error) {
-        console.error('Erro:', error);
-        showToast('❌ Erro ao limpar dados', true);
-    } finally {
-        hideLoading();
-    }
+    showModal(
+        '⚠️ ATENÇÃO - APAGAR TODOS OS DADOS',
+        'Esta ação irá APAGAR PERMANENTEMENTE todos os dados do sistema. Esta operação NÃO PODE ser desfeita! Tem certeza absoluta que deseja continuar?',
+        async () => {
+            showLoading();
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'clear' })
+                });
+                
+                showToast('Dados limpos com sucesso!');
+                limparFiltros();
+                setTimeout(() => carregarDados(), 1500);
+            } catch (error) {
+                console.error('Erro:', error);
+                showToast('Erro ao limpar dados', true);
+            } finally {
+                hideLoading();
+            }
+        }
+    );
 }
 
 function baixarCSV() {
@@ -938,8 +1134,62 @@ function baixarCSV() {
     link.download = `vendas_monitor_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     URL.revokeObjectURL(url);
-    showToast('📥 CSV baixado com sucesso!');
+    showToast('CSV baixado com sucesso!');
+}
+
+// Sistema de Modal
+let modalCallback = null;
+
+function showModal(title, message, onConfirm) {
+    const modal = document.getElementById('confirmModal');
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalBody').textContent = message;
+    modalCallback = onConfirm;
+    modal.classList.add('show');
+}
+
+function closeModal() {
+    const modal = document.getElementById('confirmModal');
+    modal.classList.remove('show');
+    modalCallback = null;
+}
+
+function confirmModal() {
+    if (modalCallback) {
+        modalCallback();
+    }
+    closeModal();
+}
+
+// Fechar modal ao clicar fora
+window.onclick = function(event) {
+    const modal = document.getElementById('confirmModal');
+    if (event.target === modal) {
+        closeModal();
+    }
 }
 </script>
+
+<!-- Modal de Confirmação -->
+<div class="modal" id="confirmModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3 id="modalTitle">Confirmação</h3>
+        </div>
+        <div class="modal-body" id="modalBody">
+            Deseja realmente executar esta ação?
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">
+                <i class="fas fa-times"></i> Cancelar
+            </button>
+            <button class="btn btn-danger" id="modalConfirmBtn" onclick="confirmModal()">
+                <i class="fas fa-check"></i> Confirmar
+            </button>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
