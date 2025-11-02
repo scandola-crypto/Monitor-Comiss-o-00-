@@ -706,7 +706,19 @@ function recarregarDados() {
 
 // Calcular comissão - Apenas 20% da Implantação (Setup)
 function calcularComissao(valorSetup) {
-    return 20; // Comissão fixa de 20% sobre o valor da implantação
+    const valor = parseFloat(valorSetup) || 0;
+    
+    if (valor <= 20000) {
+        return 20; // Até R$ 20.000,00: 20% de comissão
+    } else if (valor <= 25000) {
+        return 25; // De R$ 21.000,00 a R$ 25.000,00: 25% de comissão
+    } else if (valor <= 30000) {
+        return 30; // De R$ 26.000,00 a R$ 30.000,00: 30% de comissão
+    } else if (valor >= 35000) {
+        return 40; // Acima de R$ 35.000,00: 40% de comissão
+    } else {
+        return 30; // Entre R$ 30.001,00 e R$ 34.999,00: mantém 30%
+    }
 }
 
 // Stats
