@@ -6,82 +6,434 @@
 <title>Dashboard de Vendas - Monitor Contábil</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-    :root{--bg:#003366;--accent:#ff6600;--muted:#001f4d;}
-    body { font-family: Arial, sans-serif; background-color: var(--bg); color: #fff; margin: 16px; }
-    h1 { color: var(--accent); display: flex; align-items: center; gap: 10px; flex-wrap:wrap; }
-    h1 img { height: 40px; }
-    .container { display: flex; flex-direction: column; gap: 16px; max-width:1200px; margin:0 auto; }
-    .table-wrap{overflow-x:auto; border:1px solid rgba(255,102,0,0.15); border-radius:6px;}
-    table { width: 100%; border-collapse: collapse; background: transparent; color: #fff; }
-    th, td { border: 1px solid var(--accent); padding: 8px; text-align: center; }
-    th { background-color: var(--accent); color: white; }
-    button { padding: 6px 12px; background-color: var(--accent); color: var(--bg); border: none; cursor: pointer; margin: 4px; border-radius:4px; }
-    button:hover { background-color: #fff; color: var(--bg); }
-    input, select { padding: 6px; margin: 6px 4px; border-radius:4px; border:1px solid rgba(255,255,255,0.08); }
-    .form-container { background: transparent; padding: 10px; border: 1px solid var(--accent); border-radius:6px; }
-    .charts { display: flex; flex-direction: column; gap: 16px; align-items: center; }
-    .chart-container { background: transparent; color: #fff; padding: 10px; border-radius: 5px; max-width: 600px; width: 100%; }
-    .chart-container canvas{max-width:100% !important; max-height:400px !important;}
-    .resumo-card{display:inline-block; margin:8px 12px 0 0; padding:8px 12px; background:rgba(255,255,255,0.05); border-left:3px solid var(--accent); border-radius:4px;}
-    .resumo-card strong{color:var(--accent); font-size:18px;}
-    .resumo-card small{color:#ccc; font-size:11px;}
-
-    /* Mobile adjustments */
-    @media (max-width: 700px){
-        body{margin:10px}
-        .form-container input, .form-container select{width:100%; box-sizing:border-box}
-        h1 img{height:32px}
-        th, td{font-size:13px}
-        .resumo-card{display:block; margin:6px 0;}
+    :root {
+        --bg: #0a1628;
+        --bg-secondary: #132540;
+        --accent: #ff6600;
+        --accent-hover: #ff8533;
+        --success: #00ff88;
+        --text-primary: #ffffff;
+        --text-secondary: #a8b2c1;
+        --border: rgba(255, 102, 0, 0.2);
+        --card-bg: rgba(19, 37, 64, 0.6);
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #0a1628 0%, #1a2f4d 100%);
+        color: var(--text-primary);
+        padding: 20px;
+        min-height: 100vh;
+    }
+    
+    .header {
+        background: var(--card-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .header img { height: 50px; border-radius: 8px; }
+    .header h1 { color: var(--accent); font-size: 26px; font-weight: 600; }
+    
+    .loading {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--card-bg);
+        padding: 30px 50px;
+        border-radius: 12px;
+        border: 2px solid var(--accent);
+        z-index: 1000;
+        text-align: center;
+    }
+    
+    .loading.show { display: block; }
+    
+    .spinner {
+        border: 3px solid var(--border);
+        border-top: 3px solid var(--accent);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 15px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+    
+    .card {
+        background: var(--card-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .card h2 {
+        color: var(--accent);
+        font-size: 20px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .form-group label {
+        color: var(--text-secondary);
+        font-size: 13px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    input, select, textarea {
+        width: 100%;
+        padding: 12px 16px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-size: 14px;
+        transition: all 0.3s;
+    }
+    
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.1);
+    }
+    
+    .btn {
+        padding: 12px 24px;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .btn:hover {
+        background: var(--accent-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 102, 0, 0.4);
+    }
+    
+    .btn-secondary {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+    }
+    
+    .btn-secondary:hover {
+        background: var(--border);
+        transform: translateY(-2px);
+    }
+    
+    .btn-danger {
+        background: #dc3545;
+    }
+    
+    .btn-danger:hover {
+        background: #c82333;
+    }
+    
+    .btn-group {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--card-bg) 100%);
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 4px solid var(--accent);
+        transition: transform 0.3s;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-4px);
+    }
+    
+    .stat-card .label {
+        color: var(--text-secondary);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+    }
+    
+    .stat-card .value {
+        color: var(--accent);
+        font-size: 28px;
+        font-weight: 700;
+    }
+    
+    .table-container {
+        overflow-x: auto;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--bg-secondary);
+    }
+    
+    th, td {
+        padding: 14px 12px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    th {
+        background: var(--accent);
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 0.5px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    
+    td {
+        font-size: 14px;
+        color: var(--text-secondary);
+    }
+    
+    tbody tr {
+        transition: background 0.3s;
+    }
+    
+    tbody tr:hover {
+        background: rgba(255, 102, 0, 0.05);
+    }
+    
+    .mes-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        background: var(--accent);
+        color: white;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-secondary);
+    }
+    
+    .search-container {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .search-container input,
+    .search-container select {
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .filter-info {
+        background: rgba(255, 206, 86, 0.1);
+        border-left: 3px solid #ffce56;
+        padding: 12px 16px;
+        border-radius: 6px;
+        color: #ffce56;
+        font-size: 14px;
+        margin-top: 10px;
+    }
+    
+    .chart-wrapper {
+        background: var(--bg-secondary);
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 16px;
+    }
+    
+    .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 16px 24px;
+        background: var(--success);
+        color: #000;
+        border-radius: 8px;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        z-index: 1001;
+        display: none;
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    .toast.show { display: block; }
+    .toast.error { background: #dc3545; color: white; }
+    
+    @keyframes slideIn {
+        from { transform: translateX(400px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @media (max-width: 768px) {
+        .header { flex-direction: column; text-align: center; }
+        .header h1 { font-size: 20px; }
+        .form-grid { grid-template-columns: 1fr; }
+        .stats-grid { grid-template-columns: 1fr; }
+        table { font-size: 12px; }
+        th, td { padding: 8px; }
+        .btn-group { flex-direction: column; }
+        .btn { width: 100%; justify-content: center; }
     }
 </style>
 </head>
 <body>
-<h1><img src="https://media.licdn.com/dms/image/v2/C4D0BAQFl8jPoEN5H4A/company-logo_200_200/company-logo_200_200/0/1677181747889?e=2147483647&v=beta&t=7iLTTmqbkRp7wd4fVpxOn9PHdQxJ7Js2-sH6Zo0p2PA" alt="Logo Monitor Contábil">Dashboard de Vendas - Monitor Contábil</h1>
-<div class="container">
 
-    <div class="form-container">
-        <h2>Adicionar / Editar Cliente</h2>
-        <input type="hidden" id="clienteIndex">
-        <input type="text" id="clienteNome" placeholder="Nome do Cliente" required>
-        <input type="text" id="clienteCNPJ" placeholder="CNPJ" required>
-        <input type="number" id="clienteMRR" placeholder="MRR" required>
-        <input type="number" id="clienteSetup" placeholder="Implantação" required>
-        
-        <select id="clienteMes" required style="background:#fff; color:#333;">
-            <option value="">📅 Selecione o Mês *</option>
-            <option value="1">Janeiro</option>
-            <option value="2">Fevereiro</option>
-            <option value="3">Março</option>
-            <option value="4">Abril</option>
-            <option value="5">Maio</option>
-            <option value="6">Junho</option>
-            <option value="7">Julho</option>
-            <option value="8">Agosto</option>
-            <option value="9">Setembro</option>
-            <option value="10">Outubro</option>
-            <option value="11">Novembro</option>
-            <option value="12">Dezembro</option>
-        </select>
-        
-        <select id="clientePagamento" required>
-            <option value="">Forma de Pagamento *</option>
-            <option value="PIX">PIX</option>
-            <option value="CARTÃO">CARTÃO</option>
-            <option value="BOLETO">BOLETO</option>
-        </select>
-        
-        <input type="text" id="clienteInfoPagamento" placeholder="Observações adicionais (opcional)">
-        
-        <button onclick="salvarCliente()">💾 Salvar Cliente</button>
+<div class="loading" id="loading">
+    <div class="spinner"></div>
+    <div>Carregando dados...</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="header">
+    <img src="https://media.licdn.com/dms/image/v2/C4D0BAQFl8jPoEN5H4A/company-logo_200_200/company-logo_200_200/0/1677181747889?e=2147483647&v=beta&t=7iLTTmqbkRp7wd4fVpxOn9PHdQxJ7Js2-sH6Zo0p2PA" alt="Logo">
+    <h1>📊 Dashboard de Vendas - Monitor Contábil</h1>
+</div>
+
+<div class="container">
+    <!-- Stats Cards -->
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <!-- Formulário -->
+    <div class="card">
+        <h2>✏️ <span id="formTitle">Adicionar Cliente</span></h2>
+        <form id="clienteForm" onsubmit="salvarCliente(event)">
+            <input type="hidden" id="clienteIndex">
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="clienteNome">Nome do Cliente *</label>
+                    <input type="text" id="clienteNome" placeholder="Ex: Empresa ABC Ltda" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="clienteCNPJ">CNPJ *</label>
+                    <input type="text" id="clienteCNPJ" placeholder="00.000.000/0000-00" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="clienteMRR">MRR (R$) *</label>
+                    <input type="number" id="clienteMRR" placeholder="0.00" step="0.01" min="0" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="clienteSetup">Implantação (R$) *</label>
+                    <input type="number" id="clienteSetup" placeholder="0.00" step="0.01" min="0" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="clienteMes">Mês *</label>
+                    <select id="clienteMes" required>
+                        <option value="">Selecione o mês</option>
+                        <option value="1">Janeiro</option>
+                        <option value="2">Fevereiro</option>
+                        <option value="3">Março</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Maio</option>
+                        <option value="6">Junho</option>
+                        <option value="7">Julho</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Setembro</option>
+                        <option value="10">Outubro</option>
+                        <option value="11">Novembro</option>
+                        <option value="12">Dezembro</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="clientePagamento">Forma de Pagamento *</label>
+                    <select id="clientePagamento" required>
+                        <option value="">Selecione</option>
+                        <option value="PIX">PIX</option>
+                        <option value="CARTÃO">CARTÃO</option>
+                        <option value="BOLETO">BOLETO</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group" style="margin-top: 16px;">
+                <label for="clienteInfoPagamento">Observações (opcional)</label>
+                <textarea id="clienteInfoPagamento" rows="2" placeholder="Informações adicionais..."></textarea>
+            </div>
+            
+            <div class="btn-group" style="margin-top: 20px;">
+                <button type="submit" class="btn">💾 Salvar Cliente</button>
+                <button type="button" class="btn btn-secondary" onclick="cancelarEdicao()">✖️ Cancelar</button>
+            </div>
+        </form>
     </div>
 
-    <div class="form-container" style="margin-top:10px;">
-        <h3 style="color:#ff6600; margin:0 0 10px 0;">� Busca e Filtros</h3>
-        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-            <input type="text" id="campoBusca" placeholder="🔎 Buscar por nome, CNPJ, pagamento..." 
-                   oninput="aplicarFiltros()" style="flex:1; min-width:250px;">
-            <select id="filtroMes" onchange="aplicarFiltros()" style="width:180px;">
+    <!-- Filtros -->
+    <div class="card">
+        <h2>🔍 Buscar e Filtrar</h2>
+        <div class="search-container">
+            <input type="text" id="campoBusca" placeholder="🔎 Buscar por nome, CNPJ, pagamento..." oninput="aplicarFiltros()">
+            <select id="filtroMes" onchange="aplicarFiltros()">
                 <option value="todos">📅 Todos os Meses</option>
                 <option value="1">Janeiro</option>
                 <option value="2">Fevereiro</option>
@@ -96,203 +448,374 @@
                 <option value="11">Novembro</option>
                 <option value="12">Dezembro</option>
             </select>
-            <button onclick="limparFiltros()" style="background:#666;">Limpar Filtros</button>
+            <button class="btn btn-secondary" onclick="limparFiltros()">🗑️ Limpar</button>
         </div>
-        <div id="resultadoBusca" style="margin-top:8px; font-size:13px; color:#ffce56;"></div>
-        <div id="resumoMes" style="margin-top:12px; padding:10px; background:rgba(255,102,0,0.1); border-radius:4px; display:none;">
-            <strong style="color:#ff6600;">Resumo do Mês:</strong><br>
-            <span id="resumoTexto" style="font-size:14px;"></span>
-        </div>
+        <div id="resultadoBusca"></div>
     </div>
 
-    <div class="table-wrap">
-    <table id="tabelaVendas">
-        <thead>
-            <tr>
-                <th>Cliente</th>
-                <th>CNPJ</th>
-                <th>Mês</th>
-                <th>MRR</th>
-                <th>Implantação</th>
-                <th>Pagamento</th>
-                <th>Observações</th>
-                <th>Comissão %</th>
-                <th>Valor Comissão</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-    </div>
-
-    <div class="charts">
-        <div class="chart-container">
-            <h3 style="color:#ff6600; margin:0 0 10px 0;" id="tituloGrafico">📈 Visão Anual - Todos os Meses</h3>
-            <canvas id="graficoValores" aria-label="Gráfico de pizza por mês" role="img"></canvas>
+    <!-- Tabela -->
+    <div class="card">
+        <h2>👥 Clientes Cadastrados</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>CNPJ</th>
+                        <th>Mês</th>
+                        <th>MRR</th>
+                        <th>Setup</th>
+                        <th>Total</th>
+                        <th>Pagamento</th>
+                        <th>Observações</th>
+                        <th>Comissão %</th>
+                        <th>Comissão R$</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaBody"></tbody>
+            </table>
         </div>
     </div>
 
-    <div style="margin-top: 10px;">
-        <button onclick="baixarCSV()">Baixar CSV</button>
-        <button id="limparBtn" onclick="limparDados()">Limpar dados</button>
+    <!-- Gráficos -->
+    <div class="card">
+        <h2 id="tituloGrafico">📈 Visão Anual</h2>
+        <div class="chart-wrapper">
+            <canvas id="graficoValores"></canvas>
+        </div>
+    </div>
+
+    <!-- Ações -->
+    <div class="card">
+        <h2>⚙️ Ações</h2>
+        <div class="btn-group">
+            <button class="btn" onclick="baixarCSV()">📥 Baixar CSV</button>
+            <button class="btn btn-secondary" onclick="recarregarDados()">🔄 Recarregar</button>
+            <button class="btn btn-danger" onclick="limparDados()">🗑️ Limpar Tudo</button>
+        </div>
     </div>
 </div>
 
 <script>
-// URL do Google Apps Script (API do Google Sheets)
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzW4BW79bXogd6kL4C54syCeMTvjQPImJaWZlxOe-Cu3JrAos4CN5Pw5KJVPYn95B4W3g/exec';
 
-// Inicia vazio - dados serão carregados do Google Sheets
 let clientes = [];
+let clientesFiltrados = [];
+let mesFiltroAtual = 'todos';
+let buscaAtual = '';
+let graficoValores;
 
-// Função para carregar dados do Google Sheets
+const mesesNomes = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+const mesesCompletos = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', () => {
+    carregarDados();
+});
+
+// Funções de UI
+function showLoading() {
+    document.getElementById('loading').classList.add('show');
+}
+
+function hideLoading() {
+    document.getElementById('loading').classList.remove('show');
+}
+
+function showToast(message, isError = false) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'toast show' + (isError ? ' error' : '');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// Carregar dados
 async function carregarDados() {
+    showLoading();
     try {
-        console.log('🔄 Tentando conectar ao Google Sheets...');
-        console.log('URL:', GOOGLE_SCRIPT_URL);
-        
+        console.log('🔄 Carregando dados...');
         const response = await fetch(GOOGLE_SCRIPT_URL);
-        console.log('📡 Resposta recebida:', response.status, response.statusText);
-        
         const data = await response.json();
-        console.log('📊 Dados recebidos:', data);
         
-        // Verificar se há erro na resposta
         if (data.error) {
-            console.error('❌ Erro do servidor:', data.error);
-            alert('⚠️ Erro do Google Sheets: ' + data.error);
-            return;
+            throw new Error(data.error);
         }
         
         clientes = Array.isArray(data) ? data : [];
-        console.log('✅ Total de clientes carregados:', clientes.length);
-        atualizarTabela();
-    } catch(e) {
-        console.error('❌ Erro ao carregar dados do Google Sheets:', e);
-        console.error('Detalhes do erro:', e.message);
-        alert('⚠️ Erro ao conectar com o Google Sheets.\n\nPossíveis causas:\n1. A implantação do Apps Script não foi autorizada\n2. A URL está incorreta\n3. A planilha não tem dados ainda\n\nVerifique o console (F12) para mais detalhes.');
+        console.log('✅ Dados carregados:', clientes.length, 'clientes');
         
-        // Tentar carregar dados vazios para não quebrar o app
+        aplicarFiltros();
+        atualizarStats();
+        atualizarGraficos();
+    } catch (error) {
+        console.error('❌ Erro:', error);
+        showToast('Erro ao carregar dados: ' + error.message, true);
         clientes = [];
         atualizarTabela();
+    } finally {
+        hideLoading();
     }
 }
 
-// Carregar dados ao iniciar
-carregarDados();
-
-function calcularComissao(valorTotal) {
-    if(valorTotal <= 20000) return 20;
-    else if(valorTotal <= 25000) return 25;
-    else if(valorTotal <= 30000) return 30;
-    else return 40;
+function recarregarDados() {
+    carregarDados();
+    showToast('Dados recarregados!');
 }
 
-let mesFiltroAtual = 'todos';
-let buscaAtual = '';
+// Calcular comissão - Apenas 20% da Implantação (Setup)
+function calcularComissao(valorSetup) {
+    return 20; // Comissão fixa de 20% sobre o valor da implantação
+}
 
-function atualizarTabela() {
-    // Não precisa mais salvar no localStorage - dados estão no Google Sheets
+// Stats
+function atualizarStats() {
+    const totalClientes = clientes.length;
+    const totalMRR = clientes.reduce((acc, c) => acc + parseFloat(c.MRR || 0), 0);
+    const totalSetup = clientes.reduce((acc, c) => acc + parseFloat(c.Setup || 0), 0);
+    const totalGeral = totalMRR + totalSetup;
+    const totalComissao = clientes.reduce((acc, c) => {
+        const setup = parseFloat(c.Setup || 0);
+        return acc + (setup * calcularComissao(setup) / 100);
+    }, 0);
 
-    const tbody = document.querySelector('#tabelaVendas tbody');
-    tbody.innerHTML = '';
+    const statsGrid = document.getElementById('statsGrid');
+    statsGrid.innerHTML = `
+        <div class="stat-card">
+            <div class="label">Total Clientes</div>
+            <div class="value">${totalClientes}</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">MRR Total</div>
+            <div class="value">R$ ${totalMRR.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Setup Total</div>
+            <div class="value">R$ ${totalSetup.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Total Geral</div>
+            <div class="value">R$ ${totalGeral.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Comissão Total</div>
+            <div class="value" style="color: var(--success)">R$ ${totalComissao.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+        </div>
+    `;
+}
+
+// Filtros
+function aplicarFiltros() {
+    mesFiltroAtual = document.getElementById('filtroMes').value;
+    buscaAtual = document.getElementById('campoBusca').value.toLowerCase();
     
-    // Aplicar filtros combinados: busca + mês
-    let clientesFiltrados = clientes;
-
-    // Filtro de busca
-    if(buscaAtual.trim() !== '') {
-        const termoBusca = buscaAtual.toLowerCase();
-        clientesFiltrados = clientesFiltrados.filter(c => {
-            return (c.Nome || '').toLowerCase().includes(termoBusca) ||
-                   (c.CNPJ || '').toLowerCase().includes(termoBusca) ||
-                   (c.Pagamento || '').toLowerCase().includes(termoBusca) ||
-                   (c.InfoPagamento || '').toLowerCase().includes(termoBusca) ||
-                   (c.MRR || '').toString().includes(termoBusca) ||
-                   (c.Setup || '').toString().includes(termoBusca);
-        });
-    }
-
-    // Filtro de mês
-    if(mesFiltroAtual !== 'todos') {
-        clientesFiltrados = clientesFiltrados.filter(c => {
-            return c.Mes && parseInt(c.Mes) === parseInt(mesFiltroAtual);
-        });
-    }
-
-    // Atualizar contador de resultados
-    const resultadoDiv = document.getElementById('resultadoBusca');
-    if(buscaAtual.trim() !== '' || mesFiltroAtual !== 'todos') {
-        resultadoDiv.textContent = `📋 ${clientesFiltrados.length} registro(s) encontrado(s)`;
-    } else {
-        resultadoDiv.textContent = '';
-    }
-
-    const mesesNomes = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-
-    clientesFiltrados.forEach((c, index) => {
-        // Encontrar o índice real no array original
-        const indiceReal = clientes.indexOf(c);
-        const valorTotal = parseFloat(c.MRR) + parseFloat(c.Setup);
-        const comissaoPct = calcularComissao(valorTotal);
-        const valorComissao = (valorTotal * comissaoPct / 100).toFixed(2);
-        const mesNome = c.Mes ? mesesNomes[parseInt(c.Mes)] : '-';
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${c.Nome}</td>
-            <td>${c.CNPJ}</td>
-            <td><strong style="color:#ffce56;">${mesNome}</strong></td>
-            <td>${c.MRR}</td>
-            <td>${c.Setup}</td>
-            <td>${c.Pagamento}</td>
-            <td>${c.InfoPagamento || '-'}</td>
-            <td>${comissaoPct}%</td>
-            <td>R$ ${valorComissao}</td>
-            <td>
-                <button onclick="editarCliente(${indiceReal})">Editar</button>
-                <button onclick="excluirCliente(${indiceReal})">Excluir</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
+    clientesFiltrados = clientes.filter(c => {
+        const matchBusca = !buscaAtual || 
+            (c.Nome || '').toLowerCase().includes(buscaAtual) ||
+            (c.CNPJ || '').toLowerCase().includes(buscaAtual) ||
+            (c.Pagamento || '').toLowerCase().includes(buscaAtual) ||
+            (c.InfoPagamento || '').toLowerCase().includes(buscaAtual);
+        
+        const matchMes = mesFiltroAtual === 'todos' || 
+            parseInt(c.Mes) === parseInt(mesFiltroAtual);
+        
+        return matchBusca && matchMes;
     });
+    
+    const resultadoDiv = document.getElementById('resultadoBusca');
+    if (buscaAtual || mesFiltroAtual !== 'todos') {
+        resultadoDiv.innerHTML = `<div class="filter-info">📋 ${clientesFiltrados.length} registro(s) encontrado(s)</div>`;
+    } else {
+        resultadoDiv.innerHTML = '';
+    }
+    
+    atualizarTabela();
     atualizarGraficos();
-    atualizarResumoMes();
 }
 
-async function salvarCliente() {
-    const index = document.getElementById('clienteIndex').value;
-    const Nome = document.getElementById('clienteNome').value.trim();
-    const CNPJ = document.getElementById('clienteCNPJ').value.trim();
-    const MRR = document.getElementById('clienteMRR').value;
-    const Setup = document.getElementById('clienteSetup').value;
-    const Mes = document.getElementById('clienteMes').value;
-    const Pagamento = document.getElementById('clientePagamento').value;
-    const InfoPagamento = document.getElementById('clienteInfoPagamento').value.trim();
+function limparFiltros() {
+    document.getElementById('filtroMes').value = 'todos';
+    document.getElementById('campoBusca').value = '';
+    aplicarFiltros();
+}
 
-    if(!Nome || !CNPJ || !MRR || !Setup || !Mes || !Pagamento) {
-        alert('⚠️ Preencha todos os campos obrigatórios (*)!');
+// Tabela
+function atualizarTabela() {
+    const tbody = document.getElementById('tabelaBody');
+    
+    if (clientesFiltrados.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="11" class="empty-state">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
+                    <div>Nenhum cliente cadastrado</div>
+                </td>
+            </tr>
+        `;
         return;
     }
+    
+    tbody.innerHTML = clientesFiltrados.map((c, idx) => {
+        const indiceReal = clientes.indexOf(c);
+        const mrr = parseFloat(c.MRR || 0);
+        const setup = parseFloat(c.Setup || 0);
+        const total = mrr + setup;
+        const comissaoPct = calcularComissao(setup); // Comissão apenas sobre Setup
+        const comissaoValor = (setup * comissaoPct / 100); // Calcula sobre Setup apenas
+        const mesNome = c.Mes ? mesesNomes[parseInt(c.Mes)] : '-';
+        
+        return `
+            <tr>
+                <td style="color: var(--text-primary); font-weight: 500;">${c.Nome || 'Sem nome'}</td>
+                <td>${c.CNPJ || '-'}</td>
+                <td><span class="mes-badge">${mesNome}</span></td>
+                <td>R$ ${mrr.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                <td>R$ ${setup.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                <td style="color: var(--text-primary); font-weight: 600;">R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                <td>${c.Pagamento || '-'}</td>
+                <td>${c.InfoPagamento || '-'}</td>
+                <td>${comissaoPct}%</td>
+                <td style="color: var(--success); font-weight: 600;">R$ ${comissaoValor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                <td>
+                    <button class="btn btn-secondary" style="padding: 8px 12px; font-size: 12px;" onclick="editarCliente(${indiceReal})">✏️</button>
+                    <button class="btn btn-danger" style="padding: 8px 12px; font-size: 12px;" onclick="excluirCliente(${indiceReal})">🗑️</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
 
-    const clienteData = {Nome, CNPJ, MRR, Setup, Mes, Pagamento, InfoPagamento};
+// Gráficos
+function atualizarGraficos() {
+    const ctx = document.getElementById('graficoValores').getContext('2d');
+    if (graficoValores) graficoValores.destroy();
+    
+    if (mesFiltroAtual !== 'todos') {
+        // Gráfico de barras para mês específico
+        const mesNum = parseInt(mesFiltroAtual);
+        const clientesMes = clientes.filter(c => parseInt(c.Mes) === mesNum);
+        
+        const totalMRR = clientesMes.reduce((acc, c) => acc + parseFloat(c.MRR || 0), 0);
+        const totalSetup = clientesMes.reduce((acc, c) => acc + parseFloat(c.Setup || 0), 0);
+        const totalComissao = clientesMes.reduce((acc, c) => {
+            const setup = parseFloat(c.Setup || 0);
+            return acc + (setup * calcularComissao(setup) / 100);
+        }, 0);
+        
+        document.getElementById('tituloGrafico').textContent = `📊 Resumo de ${mesesCompletos[mesNum]}`;
+        
+        graficoValores = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['MRR', 'Implantação', 'Comissão'],
+                datasets: [{
+                    label: mesesCompletos[mesNum],
+                    data: [totalMRR, totalSetup, totalComissao],
+                    backgroundColor: ['#ff6384', '#36a2eb', '#ffce56'],
+                    borderColor: '#0a1628',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { labels: { color: '#fff' } },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `R$ ${ctx.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: '#a8b2c1' },
+                        grid: { color: 'rgba(255, 102, 0, 0.1)' }
+                    },
+                    x: {
+                        ticks: { color: '#a8b2c1' },
+                        grid: { color: 'rgba(255, 102, 0, 0.1)' }
+                    }
+                }
+            }
+        });
+    } else {
+        // Gráfico de pizza anual
+        const monthlyTotals = new Array(12).fill(0);
+        clientes.forEach(c => {
+            if (c.Mes) {
+                const idx = parseInt(c.Mes) - 1;
+                const valor = parseFloat(c.MRR || 0) + parseFloat(c.Setup || 0);
+                monthlyTotals[idx] += valor;
+            }
+        });
+        
+        document.getElementById('tituloGrafico').textContent = '📈 Visão Anual - Todos os Meses';
+        
+        const colors = ['#ff6384', '#36a2eb', '#ffce56', '#66bb6a', '#ab47bc', '#ff7043', '#29b6f6', '#ffee58', '#8d6e63', '#9ccc65', '#26a69a', '#5c6bc0'];
+        
+        graficoValores = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: mesesNomes.slice(1),
+                datasets: [{
+                    data: monthlyTotals,
+                    backgroundColor: colors,
+                    borderColor: '#0a1628',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { 
+                        labels: { color: '#fff' },
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `${ctx.label}: R$ ${ctx.parsed.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
 
+// Salvar cliente
+async function salvarCliente(event) {
+    event.preventDefault();
+    
+    const index = document.getElementById('clienteIndex').value;
+    const clienteData = {
+        Nome: document.getElementById('clienteNome').value.trim(),
+        CNPJ: document.getElementById('clienteCNPJ').value.trim(),
+        MRR: document.getElementById('clienteMRR').value,
+        Setup: document.getElementById('clienteSetup').value,
+        Mes: document.getElementById('clienteMes').value,
+        Pagamento: document.getElementById('clientePagamento').value,
+        InfoPagamento: document.getElementById('clienteInfoPagamento').value.trim()
+    };
+    
+    showLoading();
     try {
-        if(index === '') {
-            // Adicionar novo cliente
+        if (index === '') {
+            // Adicionar
             await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({action: 'add', ...clienteData})
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'add', ...clienteData })
             });
+            showToast('✅ Cliente adicionado com sucesso!');
         } else {
-            // Atualizar cliente existente
+            // Atualizar
             const clienteAntigo = clientes[index];
             await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
-                headers: {'Content-Type': 'application/json'},
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'update',
                     oldNome: clienteAntigo.Nome,
@@ -300,24 +823,16 @@ async function salvarCliente() {
                     ...clienteData
                 })
             });
+            showToast('✅ Cliente atualizado com sucesso!');
         }
         
-        // Limpar formulário
-        document.getElementById('clienteIndex').value = '';
-        document.getElementById('clienteNome').value = '';
-        document.getElementById('clienteCNPJ').value = '';
-        document.getElementById('clienteMRR').value = '';
-        document.getElementById('clienteSetup').value = '';
-        document.getElementById('clienteMes').value = '';
-        document.getElementById('clientePagamento').value = '';
-        document.getElementById('clienteInfoPagamento').value = '';
-        
-        // Recarregar dados
-        setTimeout(() => carregarDados(), 1000);
-        alert('✅ Cliente salvo com sucesso!');
-    } catch(e) {
-        console.error('Erro ao salvar:', e);
-        alert('⚠️ Erro ao salvar no Google Sheets.');
+        cancelarEdicao();
+        setTimeout(() => carregarDados(), 1500);
+    } catch (error) {
+        console.error('Erro:', error);
+        showToast('❌ Erro ao salvar cliente', true);
+    } finally {
+        hideLoading();
     }
 }
 
@@ -331,21 +846,27 @@ function editarCliente(index) {
     document.getElementById('clienteMes').value = c.Mes || '';
     document.getElementById('clientePagamento').value = c.Pagamento;
     document.getElementById('clienteInfoPagamento').value = c.InfoPagamento || '';
-    
-    // Scroll para o topo do formulário
-    window.scrollTo({top: 0, behavior: 'smooth'});
+    document.getElementById('formTitle').textContent = 'Editar Cliente';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelarEdicao() {
+    document.getElementById('clienteForm').reset();
+    document.getElementById('clienteIndex').value = '';
+    document.getElementById('formTitle').textContent = 'Adicionar Cliente';
 }
 
 async function excluirCliente(index) {
-    if(!confirm('⚠️ Tem certeza que deseja excluir este cliente?')) return;
+    if (!confirm('⚠️ Tem certeza que deseja excluir este cliente?')) return;
     
     const cliente = clientes[index];
+    showLoading();
     
     try {
         await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
             mode: 'no-cors',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 action: 'delete',
                 Nome: cliente.Nome,
@@ -353,223 +874,72 @@ async function excluirCliente(index) {
             })
         });
         
-        setTimeout(() => carregarDados(), 1000);
-        alert('✅ Cliente excluído com sucesso!');
-    } catch(e) {
-        console.error('Erro ao excluir:', e);
-        alert('⚠️ Erro ao excluir do Google Sheets.');
+        showToast('✅ Cliente excluído com sucesso!');
+        setTimeout(() => carregarDados(), 1500);
+    } catch (error) {
+        console.error('Erro:', error);
+        showToast('❌ Erro ao excluir cliente', true);
+    } finally {
+        hideLoading();
     }
 }
 
-let graficoValores;
-function atualizarGraficos() {
-    const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-    const mesesCompletos = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+async function limparDados() {
+    if (!confirm('⚠️⚠️⚠️ ATENÇÃO! Isso irá APAGAR TODOS OS DADOS!\n\nTem certeza absoluta?')) return;
+    if (!confirm('Esta ação NÃO PODE ser desfeita!\n\nConfirma?')) return;
     
-    const ctxValores = document.getElementById('graficoValores').getContext('2d');
-    if(graficoValores) graficoValores.destroy();
-
-    // Se está filtrando por mês específico, mostrar gráfico de barras detalhado
-    if(mesFiltroAtual !== 'todos') {
-        const mesNum = parseInt(mesFiltroAtual);
-        const clientesMes = clientes.filter(c => {
-            return c.Mes && parseInt(c.Mes) === mesNum;
-        });
-
-        const totalMRR = clientesMes.reduce((acc, c) => acc + (parseFloat(c.MRR) || 0), 0);
-        const totalSetup = clientesMes.reduce((acc, c) => acc + (parseFloat(c.Setup) || 0), 0);
-        const totalComissao = clientesMes.reduce((acc, c) => {
-            const valorTotal = (parseFloat(c.MRR) || 0) + (parseFloat(c.Setup) || 0);
-            return acc + (valorTotal * calcularComissao(valorTotal) / 100);
-        }, 0);
-
-        document.getElementById('tituloGrafico').textContent = `📊 Resumo de ${mesesCompletos[mesNum-1]}`;
-
-        graficoValores = new Chart(ctxValores, {
-            type: 'bar',
-            data: {
-                labels: ['MRR', 'Implantação', 'Comissão'],
-                datasets: [{
-                    label: mesesCompletos[mesNum-1],
-                    data: [totalMRR.toFixed(2), totalSetup.toFixed(2), totalComissao.toFixed(2)],
-                    backgroundColor: ['#ff6384','#36a2eb','#ffce56'],
-                    borderColor: '#0b2340',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { labels: { color: '#fff' } },
-                    tooltip: { callbacks: { label: function(ctx){
-                        return `R$ ${Number(ctx.parsed.y).toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
-                    }}}
-                },
-                scales: {
-                    x: { ticks: { color: '#fff' }, grid: { color: '#001f4d' } },
-                    y: { ticks: { color: '#fff' }, grid: { color: '#001f4d' }, beginAtZero: true }
-                }
-            }
-        });
-    } else {
-        // Visão anual - gráfico de pizza com todos os meses
-        const monthlyTotals = new Array(12).fill(0);
-
-        clientes.forEach(c => {
-            if(c.Mes) {
-                const valor = (parseFloat(c.MRR) || 0) + (parseFloat(c.Setup) || 0);
-                const monthIndex = Math.max(1, Math.min(12, parseInt(c.Mes))) - 1;
-                monthlyTotals[monthIndex] += valor;
-            }
-        });
-
-        document.getElementById('tituloGrafico').textContent = '📈 Visão Anual - Todos os Meses';
-
-        const colors = ['#ff6384','#36a2eb','#ffce56','#66bb6a','#ab47bc','#ff7043','#29b6f6','#ffee58','#8d6e63','#9ccc65','#26a69a','#5c6bc0'];
-
-        graficoValores = new Chart(ctxValores, {
-            type: 'pie',
-            data: {
-                labels: meses,
-                datasets: [{
-                    data: monthlyTotals.map(v => +v.toFixed(2)),
-                    backgroundColor: colors,
-                    borderColor: '#0b2340',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { labels: { color: '#fff' }, position: 'bottom' },
-                    tooltip: { callbacks: { label: function(ctx){
-                        const val = ctx.parsed || 0; return `${ctx.label}: R$ ${Number(val).toLocaleString('pt-BR')}`;
-                    }}}
-                }
-            }
-        });
-    }
-}
-
-async function limparDados(){
-    if(!confirm('⚠️ Tem certeza que deseja limpar TODOS os dados do Google Sheets? Essa ação não pode ser desfeita!')) return;
-    
+    showLoading();
     try {
         await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
             mode: 'no-cors',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({action: 'clear'})
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'clear' })
         });
         
-        setTimeout(() => carregarDados(), 1000);
+        showToast('✅ Dados limpos com sucesso!');
         limparFiltros();
-        alert('✅ Dados limpos com sucesso!');
-    } catch(e) {
-        console.error('Erro ao limpar dados:', e);
-        alert('⚠️ Erro ao limpar dados do Google Sheets.');
+        setTimeout(() => carregarDados(), 1500);
+    } catch (error) {
+        console.error('Erro:', error);
+        showToast('❌ Erro ao limpar dados', true);
+    } finally {
+        hideLoading();
     }
-}
-
-function aplicarFiltros() {
-    mesFiltroAtual = document.getElementById('filtroMes').value;
-    buscaAtual = document.getElementById('campoBusca').value;
-    atualizarTabela();
-}
-
-function limparFiltros() {
-    mesFiltroAtual = 'todos';
-    buscaAtual = '';
-    document.getElementById('filtroMes').value = 'todos';
-    document.getElementById('campoBusca').value = '';
-    atualizarTabela();
-}
-
-function atualizarResumoMes() {
-    const resumoDiv = document.getElementById('resumoMes');
-    const resumoTexto = document.getElementById('resumoTexto');
-    
-    if(mesFiltroAtual === 'todos') {
-        resumoDiv.style.display = 'none';
-        return;
-    }
-
-    const mesesCompletos = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-    const mesNum = parseInt(mesFiltroAtual);
-    
-    const clientesMes = clientes.filter(c => {
-        return c.Mes && parseInt(c.Mes) === mesNum;
-    });
-
-    if(clientesMes.length === 0) {
-        resumoDiv.style.display = 'block';
-        resumoTexto.innerHTML = `<span style="color:#ffce56;">Nenhum registro encontrado para ${mesesCompletos[mesNum-1]}</span>`;
-        return;
-    }
-
-    const totalMRR = clientesMes.reduce((acc, c) => acc + (parseFloat(c.MRR) || 0), 0);
-    const totalSetup = clientesMes.reduce((acc, c) => acc + (parseFloat(c.Setup) || 0), 0);
-    const totalGeral = totalMRR + totalSetup;
-    const totalComissao = clientesMes.reduce((acc, c) => {
-        const valorTotal = (parseFloat(c.MRR) || 0) + (parseFloat(c.Setup) || 0);
-        return acc + (valorTotal * calcularComissao(valorTotal) / 100);
-    }, 0);
-
-    resumoDiv.style.display = 'block';
-    resumoTexto.innerHTML = `
-        <div class="resumo-card">
-            <small>Clientes</small><br>
-            <strong>${clientesMes.length}</strong>
-        </div>
-        <div class="resumo-card">
-            <small>MRR Total</small><br>
-            <strong>R$ ${totalMRR.toLocaleString('pt-BR', {minimumFractionDigits:2})}</strong>
-        </div>
-        <div class="resumo-card">
-            <small>Implantação Total</small><br>
-            <strong>R$ ${totalSetup.toLocaleString('pt-BR', {minimumFractionDigits:2})}</strong>
-        </div>
-        <div class="resumo-card">
-            <small>Valor Total</small><br>
-            <strong>R$ ${totalGeral.toLocaleString('pt-BR', {minimumFractionDigits:2})}</strong>
-        </div>
-        <div class="resumo-card">
-            <small>Comissão Total</small><br>
-            <strong style="color:#00ff88;">R$ ${totalComissao.toLocaleString('pt-BR', {minimumFractionDigits:2})}</strong>
-        </div>
-    `;
 }
 
 function baixarCSV() {
-    if(clientes.length === 0) {
-        alert('Não há dados para baixar!');
+    if (clientes.length === 0) {
+        showToast('Não há dados para baixar!', true);
         return;
     }
-
-    const mesesCompletos = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-    const cabecalho = ['Nome','CNPJ','Mês','MRR','Implantação','Pagamento','Observações','Comissão %','Valor Comissão'];
+    
+    const cabecalho = ['Nome', 'CNPJ', 'Mês', 'MRR', 'Setup', 'Total', 'Pagamento', 'Observações', 'Comissão %', 'Valor Comissão'];
     const linhas = clientes.map(c => {
-        const valorTotal = parseFloat(c.MRR) + parseFloat(c.Setup);
-        const comissaoPct = calcularComissao(valorTotal);
-        const valorComissao = (valorTotal * comissaoPct / 100).toFixed(2);
+        const mrr = parseFloat(c.MRR || 0);
+        const setup = parseFloat(c.Setup || 0);
+        const total = mrr + setup;
+        const comissaoPct = calcularComissao(setup); // Comissão apenas sobre Setup
+        const comissaoValor = (setup * comissaoPct / 100).toFixed(2); // Calcula sobre Setup apenas
         const mesNome = c.Mes ? mesesCompletos[parseInt(c.Mes)] : '-';
-        return [c.Nome, c.CNPJ, mesNome, c.MRR, c.Setup, c.Pagamento, c.InfoPagamento || '-', comissaoPct + '%', valorComissao].join(';');
+        
+        return [
+            c.Nome, c.CNPJ, mesNome, mrr.toFixed(2), setup.toFixed(2), 
+            total.toFixed(2), c.Pagamento, c.InfoPagamento || '-', 
+            comissaoPct + '%', comissaoValor
+        ].join(';');
     });
-
-    const csvContent = [cabecalho.join(';'), ...linhas].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    
+    const csv = [cabecalho.join(';'), ...linhas].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-
     const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'vendas_monitor_contabil.csv');
-    link.style.display = 'none';
-    document.body.appendChild(link);
+    link.href = url;
+    link.download = `vendas_monitor_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
-    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast('📥 CSV baixado com sucesso!');
 }
-
-// Não chama mais atualizarTabela() aqui - será chamado pelo carregarDados()
 </script>
 </body>
 </html>
