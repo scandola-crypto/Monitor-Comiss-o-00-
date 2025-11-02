@@ -306,6 +306,14 @@
         padding: 20px;
         border-radius: 10px;
         margin-top: 16px;
+        position: relative;
+        height: 400px;
+    }
+    
+    .chart-wrapper canvas {
+        max-height: 400px !important;
+        width: 100% !important;
+        height: auto !important;
     }
     
     .toast {
@@ -471,6 +479,15 @@
         .modal-content { width: 95%; }
         .modal-footer { flex-direction: column; }
         .modal-footer .btn { width: 100%; }
+        
+        .chart-wrapper {
+            height: 300px;
+            padding: 15px;
+        }
+        
+        .chart-wrapper canvas {
+            max-height: 300px !important;
+        }
     }
 </style>
 </head>
@@ -598,7 +615,6 @@
                         <th>Mês</th>
                         <th>MRR</th>
                         <th>Setup</th>
-                        <th>Total</th>
                         <th>Pagamento</th>
                         <th>Observações</th>
                         <th>Comissão %</th>
@@ -675,7 +691,7 @@ function showToast(message, isError = false) {
 async function carregarDados() {
     showLoading();
     try {
-        console.log('🔄 Carregando dados...');
+        console.log('Carregando dados...');
         const response = await fetch(GOOGLE_SCRIPT_URL);
         const data = await response.json();
         
@@ -684,13 +700,13 @@ async function carregarDados() {
         }
         
         clientes = Array.isArray(data) ? data : [];
-        console.log('✅ Dados carregados:', clientes.length, 'clientes');
+        console.log('Dados carregados:', clientes.length, 'clientes');
         
         aplicarFiltros();
         atualizarStats();
         atualizarGraficos();
     } catch (error) {
-        console.error('❌ Erro:', error);
+        console.error('Erro:', error);
         showToast('Erro ao carregar dados: ' + error.message, true);
         clientes = [];
         atualizarTabela();
@@ -704,20 +720,20 @@ function recarregarDados() {
     showToast('Dados recarregados!');
 }
 
-// Calcular comissão - Apenas 20% da Implantação (Setup)
+// Calcular comissão progressiva sobre o valor da Implantação (Setup)
 function calcularComissao(valorSetup) {
     const valor = parseFloat(valorSetup) || 0;
     
     if (valor <= 20000) {
-        return 20; // Até R$ 20.000,00: 20% de comissão
+        return 20;
     } else if (valor <= 25000) {
-        return 25; // De R$ 21.000,00 a R$ 25.000,00: 25% de comissão
+        return 25;
     } else if (valor <= 30000) {
-        return 30; // De R$ 26.000,00 a R$ 30.000,00: 30% de comissão
+        return 30;
     } else if (valor >= 35000) {
-        return 40; // Acima de R$ 35.000,00: 40% de comissão
+        return 40;
     } else {
-        return 30; // Entre R$ 30.001,00 e R$ 34.999,00: mantém 30%
+        return 30;
     }
 }
 
@@ -841,7 +857,7 @@ function atualizarTabela() {
     if (clientesFiltrados.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="11" class="empty-state">
+                <td colspan="10" class="empty-state">
                     <div style="font-size: 48px; margin-bottom: 16px;"><i class="fas fa-inbox"></i></div>
                     <div>Nenhum cliente cadastrado</div>
                 </td>
@@ -859,9 +875,8 @@ function atualizarTabela() {
         const indiceReal = clientes.indexOf(c);
         const mrr = parseFloat(c.MRR || 0);
         const setup = parseFloat(c.Setup || 0);
-        const total = mrr + setup;
-        const comissaoPct = calcularComissao(setup); // Comissão apenas sobre Setup
-        const comissaoValor = (setup * comissaoPct / 100); // Calcula sobre Setup apenas
+        const comissaoPct = calcularComissao(setup);
+        const comissaoValor = (setup * comissaoPct / 100);
         const mesNome = c.Mes ? mesesNomes[parseInt(c.Mes)] : '-';
         
         return `
@@ -871,7 +886,6 @@ function atualizarTabela() {
                 <td><span class="mes-badge">${mesNome}</span></td>
                 <td>R$ ${mrr.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
                 <td>R$ ${setup.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                <td style="color: var(--text-primary); font-weight: 600;">R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
                 <td>${c.Pagamento || '-'}</td>
                 <td>${c.InfoPagamento || '-'}</td>
                 <td>${comissaoPct}%</td>
@@ -902,7 +916,7 @@ function atualizarGraficos() {
             return acc + (setup * calcularComissao(setup) / 100);
         }, 0);
         
-        document.getElementById('tituloGrafico').textContent = `📊 Resumo de ${mesesCompletos[mesNum]}`;
+        document.getElementById('tituloGrafico').innerHTML = `<i class="fas fa-chart-bar"></i> Resumo de ${mesesCompletos[mesNum]}`;
         
         graficoValores = new Chart(ctx, {
             type: 'bar',
@@ -918,8 +932,14 @@ function atualizarGraficos() {
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
-                    legend: { labels: { color: '#fff' } },
+                    legend: { 
+                        labels: { 
+                            color: '#fff',
+                            font: { size: 12 }
+                        } 
+                    },
                     tooltip: {
                         callbacks: {
                             label: ctx => `R$ ${ctx.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`
@@ -929,11 +949,17 @@ function atualizarGraficos() {
                 scales: {
                     y: {
                         beginAtZero: true,
-                        ticks: { color: '#a8b2c1' },
+                        ticks: { 
+                            color: '#a8b2c1',
+                            font: { size: 11 }
+                        },
                         grid: { color: 'rgba(255, 102, 0, 0.1)' }
                     },
                     x: {
-                        ticks: { color: '#a8b2c1' },
+                        ticks: { 
+                            color: '#a8b2c1',
+                            font: { size: 11 }
+                        },
                         grid: { color: 'rgba(255, 102, 0, 0.1)' }
                     }
                 }
@@ -950,8 +976,6 @@ function atualizarGraficos() {
             }
         });
         
-        document.getElementById('tituloGrafico').textContent = '📈 Visão Anual - Todos os Meses';
-        
         const colors = ['#ff6384', '#36a2eb', '#ffce56', '#66bb6a', '#ab47bc', '#ff7043', '#29b6f6', '#ffee58', '#8d6e63', '#9ccc65', '#26a69a', '#5c6bc0'];
         
         graficoValores = new Chart(ctx, {
@@ -967,9 +991,14 @@ function atualizarGraficos() {
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: { 
-                        labels: { color: '#fff' },
+                        labels: { 
+                            color: '#fff',
+                            font: { size: 11 },
+                            padding: 10
+                        },
                         position: 'bottom'
                     },
                     tooltip: {
@@ -1008,7 +1037,7 @@ async function salvarCliente(event) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'add', ...clienteData })
             });
-            showToast('✅ Cliente adicionado com sucesso!');
+            showToast('Cliente adicionado com sucesso!');
         } else {
             // Atualizar
             const clienteAntigo = clientes[index];
@@ -1023,14 +1052,14 @@ async function salvarCliente(event) {
                     ...clienteData
                 })
             });
-            showToast('✅ Cliente atualizado com sucesso!');
+            showToast('Cliente atualizado com sucesso!');
         }
         
         cancelarEdicao();
         setTimeout(() => carregarDados(), 1500);
     } catch (error) {
         console.error('Erro:', error);
-        showToast('❌ Erro ao salvar cliente', true);
+        showToast('Erro ao salvar cliente', true);
     } finally {
         hideLoading();
     }
@@ -1091,7 +1120,7 @@ async function excluirCliente(index) {
 
 async function limparDados() {
     showModal(
-        '⚠️ ATENÇÃO - APAGAR TODOS OS DADOS',
+        'ATENÇÃO - APAGAR TODOS OS DADOS',
         'Esta ação irá APAGAR PERMANENTEMENTE todos os dados do sistema. Esta operação NÃO PODE ser desfeita! Tem certeza absoluta que deseja continuar?',
         async () => {
             showLoading();
@@ -1122,18 +1151,17 @@ function baixarCSV() {
         return;
     }
     
-    const cabecalho = ['Nome', 'CNPJ', 'Mês', 'MRR', 'Setup', 'Total', 'Pagamento', 'Observações', 'Comissão %', 'Valor Comissão'];
+    const cabecalho = ['Nome', 'CNPJ', 'Mês', 'MRR', 'Setup', 'Pagamento', 'Observações', 'Comissão %', 'Valor Comissão'];
     const linhas = clientes.map(c => {
         const mrr = parseFloat(c.MRR || 0);
         const setup = parseFloat(c.Setup || 0);
-        const total = mrr + setup;
-        const comissaoPct = calcularComissao(setup); // Comissão apenas sobre Setup
-        const comissaoValor = (setup * comissaoPct / 100).toFixed(2); // Calcula sobre Setup apenas
+        const comissaoPct = calcularComissao(setup);
+        const comissaoValor = (setup * comissaoPct / 100).toFixed(2);
         const mesNome = c.Mes ? mesesCompletos[parseInt(c.Mes)] : '-';
         
         return [
             c.Nome, c.CNPJ, mesNome, mrr.toFixed(2), setup.toFixed(2), 
-            total.toFixed(2), c.Pagamento, c.InfoPagamento || '-', 
+            c.Pagamento, c.InfoPagamento || '-', 
             comissaoPct + '%', comissaoValor
         ].join(';');
     });
